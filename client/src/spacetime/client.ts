@@ -1,6 +1,6 @@
 import { DbConnection } from '../generated';
 
-const HOST = (import.meta as any).env.VITE_SPACETIME_HOST || 'http://localhost:3000';
+const HOST = (import.meta as any).env.VITE_SPACETIME_HOST || 'http://localhost:3001';
 const DB_NAME = (import.meta as any).env.VITE_SPACETIME_DB || 'cellcomcrm';
 
 export const connectionBuilder = DbConnection.builder()
