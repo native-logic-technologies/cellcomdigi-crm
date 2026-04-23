@@ -1,3 +1,4 @@
 {
-  "server": "local"
+  "server": "local",
+  "database": "cellcom-crm"
 }

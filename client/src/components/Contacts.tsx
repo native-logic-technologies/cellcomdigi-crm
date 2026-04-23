@@ -1,0 +1,209 @@
+import { useState } from 'react';
+import { Search, Pencil, Trash2 } from 'lucide-react';
+import { useTable, useDb } from '../spacetime/hooks';
+import PageHeader from './PageHeader';
+import ConfirmDialog from './ConfirmDialog';
+import {
+  Button, Input, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter,
+  Table, TableHeader, TableColumn, TableBody, TableRow, TableCell,
+  Badge, Card, CardBody, Avatar, Select, SelectItem
+} from '@nextui-org/react';
+
+const statusOptions = ['Lead', 'Prospect', 'Customer', 'Churned'];
+const sourceOptions = ['Whatsapp', 'Tiktok', 'Email', 'Website', 'Manual', 'Pos'];
+const statusColorMap: Record<string, 'warning' | 'primary' | 'success' | 'default'> = {
+  Lead: 'warning', Prospect: 'primary', Customer: 'success', Churned: 'default',
+};
+
+export default function Contacts() {
+  const db = useDb();
+  const [contacts] = useTable('contacts');
+  const [companies] = useTable('companies');
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing] = useState<any | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState<bigint | null>(null);
+  const [form, setForm] = useState({
+    name: '', email: '', phone: '', companyId: '', status: 'Lead', source: 'Manual',
+  });
+
+  const companyMap = new Map(companies.map((c: any) => [c.id, c]));
+
+  const filtered = contacts.filter((c: any) => {
+    const q = search.toLowerCase();
+    const matchesSearch = !q ||
+      c.name.toLowerCase().includes(q) ||
+      c.email.toLowerCase().includes(q) ||
+      c.phone.toLowerCase().includes(q);
+    const matchesStatus = !statusFilter || c.status?.tag === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  const openCreate = () => {
+    setEditing(null);
+    setForm({ name: '', email: '', phone: '', companyId: '', status: 'Lead', source: 'Manual' });
+    setModalOpen(true);
+  };
+
+  const openEdit = (contact: any) => {
+    setEditing(contact);
+    setForm({
+      name: contact.name,
+      email: contact.email,
+      phone: contact.phone,
+      companyId: contact.companyId?.toString() ?? '',
+      status: (contact.status as any)?.tag ?? 'Lead',
+      source: (contact.source as any)?.tag ?? 'Manual',
+    });
+    setModalOpen(true);
+  };
+
+  const save = () => {
+    if (!db || !form.name || !form.email) return;
+    const companyId = form.companyId ? BigInt(form.companyId) : undefined;
+    if (editing) {
+      (db.reducers as any).updateContact({
+        id: editing.id, email: form.email, phone: form.phone, name: form.name,
+        companyId, status: { tag: form.status }, assignedTo: editing.assignedTo,
+        customFields: editing.customFields,
+      });
+    } else {
+      (db.reducers as any).createContact({
+        tenantId: 1n, email: form.email, phone: form.phone, name: form.name,
+        companyId, source: { tag: form.source }, status: { tag: form.status },
+        assignedTo: undefined, customFields: '{}',
+      });
+    }
+    setModalOpen(false);
+  };
+
+  const promptRemove = (id: bigint) => {
+    setDeletingId(id);
+    setConfirmOpen(true);
+  };
+
+  const remove = () => {
+    if (!db || !deletingId) return;
+    (db.reducers as any).deleteContact({ id: deletingId });
+    setDeletingId(null);
+  };
+
+  return (
+    <div className="space-y-5 max-w-7xl mx-auto animate-fade-in">
+      <PageHeader title="Contacts" subtitle="Manage your leads and customers" actionLabel="Add Contact" onAction={openCreate} />
+
+      <Card className="border border-slate-100 shadow-sm">
+        <CardBody className="flex flex-row flex-wrap gap-3 py-4">
+          <Input
+            classNames={{ base: 'max-w-md', inputWrapper: 'bg-slate-50 border-slate-200', input: 'text-sm placeholder:text-slate-400' }}
+            placeholder="Search contacts..."
+            startContent={<Search className="w-4 h-4 text-slate-400" />}
+            value={search}
+            onValueChange={setSearch}
+          />
+          <Select
+            className="max-w-xs"
+            placeholder="Filter by status"
+            aria-label="Filter contacts by status"
+            selectedKeys={statusFilter ? [statusFilter] : []}
+            onSelectionChange={(keys) => {
+              const val = Array.from(keys)[0] as string;
+              setStatusFilter(val === 'all' ? '' : val);
+            }}
+            items={[{key: 'all', label: 'All Statuses'}, ...statusOptions.map(s => ({key: s, label: s}))]}
+          >
+            {(item: any) => <SelectItem key={item.key} textValue={item.label}>{item.label}</SelectItem>}
+          </Select>
+        </CardBody>
+      </Card>
+
+      <Card className="border border-slate-100 shadow-sm">
+        <CardBody className="p-0">
+          <Table removeWrapper aria-label="Contacts table" classNames={{ th: 'bg-slate-50 text-slate-500 text-xs font-semibold uppercase tracking-wider', td: 'py-3' }}>
+            <TableHeader>
+              <TableColumn>NAME</TableColumn>
+              <TableColumn>EMAIL</TableColumn>
+              <TableColumn>PHONE</TableColumn>
+              <TableColumn>COMPANY</TableColumn>
+              <TableColumn>STATUS</TableColumn>
+              <TableColumn>SOURCE</TableColumn>
+              <TableColumn className="text-right">ACTIONS</TableColumn>
+            </TableHeader>
+            <TableBody emptyContent="No contacts found">
+              {filtered.map((c: any) => (
+                <TableRow key={c.id.toString()} className="hover:bg-slate-50/60 transition-colors">
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <Avatar name={c.name} size="sm" className="bg-brand-100 text-brand-700" />
+                      <span className="font-medium text-slate-800">{c.name}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-slate-600">{c.email}</TableCell>
+                  <TableCell className="text-slate-600">{c.phone}</TableCell>
+                  <TableCell className="text-slate-600">{c.companyId ? companyMap.get(c.companyId)?.name ?? '—' : '—'}</TableCell>
+                  <TableCell>
+                    <Badge color={statusColorMap[c.status?.tag] ?? 'default'} variant="flat" size="sm" className="font-medium">
+                      {c.status?.tag}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="faded" size="sm" className="text-slate-500 font-medium">{c.source?.tag}</Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex justify-end gap-1">
+                      <Button isIconOnly size="sm" variant="light" className="text-slate-400 hover:text-slate-700" onPress={() => openEdit(c)}>
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button isIconOnly size="sm" variant="light" className="text-slate-400 hover:text-rose-600" onPress={() => promptRemove(c.id)}>
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardBody>
+      </Card>
+
+      <Modal isOpen={modalOpen} onOpenChange={setModalOpen} size="lg">
+        <ModalContent>
+          <ModalHeader className="text-slate-900 font-outfit">{editing ? 'Edit Contact' : 'New Contact'}</ModalHeader>
+          <ModalBody className="gap-4">
+            <Input label="Name" value={form.name} onValueChange={(v) => setForm({ ...form, name: v })} isRequired />
+            <div className="grid grid-cols-2 gap-4">
+              <Input label="Email" type="email" value={form.email} onValueChange={(v) => setForm({ ...form, email: v })} isRequired />
+              <Input label="Phone" value={form.phone} onValueChange={(v) => setForm({ ...form, phone: v })} />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <Select label="Status" selectedKeys={[form.status]} onSelectionChange={(keys) => setForm({ ...form, status: Array.from(keys)[0] as string })} items={statusOptions.map(s => ({key: s, label: s}))}>
+                {(item: any) => <SelectItem key={item.key} textValue={item.label}>{item.label}</SelectItem>}
+              </Select>
+              <Select label="Source" selectedKeys={[form.source]} onSelectionChange={(keys) => setForm({ ...form, source: Array.from(keys)[0] as string })} items={sourceOptions.map(s => ({key: s, label: s}))}>
+                {(item: any) => <SelectItem key={item.key} textValue={item.label}>{item.label}</SelectItem>}
+              </Select>
+            </div>
+            <Select label="Company" selectedKeys={form.companyId ? [form.companyId] : []} onSelectionChange={(keys) => setForm({ ...form, companyId: Array.from(keys)[0] as string || '' })} items={[{key: 'none', label: 'None'}, ...companies.map((c: any) => ({key: c.id.toString(), label: c.name}))]}>
+              {(item: any) => <SelectItem key={item.key} textValue={item.label}>{item.label}</SelectItem>}
+            </Select>
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="light" onPress={() => setModalOpen(false)}>Cancel</Button>
+            <Button color="primary" className="bg-brand-600" onPress={save}>Save</Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      <ConfirmDialog
+        isOpen={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={remove}
+        title="Delete contact?"
+        description="This will permanently remove the contact from your CRM."
+        confirmLabel="Delete"
+      />
+    </div>
+  );
+}

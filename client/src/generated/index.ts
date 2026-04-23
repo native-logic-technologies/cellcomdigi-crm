@@ -34,28 +34,235 @@ import {
 } from "spacetimedb";
 
 // Import all reducer arg schemas
+import AddInvoiceItemReducer from "./add_invoice_item_reducer";
 import AddTenantMemberReducer from "./add_tenant_member_reducer";
-import BfsTraverseReducer from "./bfs_traverse_reducer";
-import CreateEdgeReducer from "./create_edge_reducer";
-import CreateVertexReducer from "./create_vertex_reducer";
-import DeleteEdgeReducer from "./delete_edge_reducer";
-import DeleteVertexReducer from "./delete_vertex_reducer";
-import FindNeighborsReducer from "./find_neighbors_reducer";
-import MergeVerticesReducer from "./merge_vertices_reducer";
-import UpdateEdgeReducer from "./update_edge_reducer";
-import UpdateVertexReducer from "./update_vertex_reducer";
+import ArchiveConversationReducer from "./archive_conversation_reducer";
+import CreateActivityReducer from "./create_activity_reducer";
+import CreateCompanyReducer from "./create_company_reducer";
+import CreateContactReducer from "./create_contact_reducer";
+import CreateConversationReducer from "./create_conversation_reducer";
+import CreateDealReducer from "./create_deal_reducer";
+import CreateInvoiceReducer from "./create_invoice_reducer";
+import CreatePipelineReducer from "./create_pipeline_reducer";
+import CreatePipelineStageReducer from "./create_pipeline_stage_reducer";
+import CreateProductReducer from "./create_product_reducer";
+import CreateUserReducer from "./create_user_reducer";
+import CreateWorkflowReducer from "./create_workflow_reducer";
+import DeleteActivityReducer from "./delete_activity_reducer";
+import DeleteCompanyReducer from "./delete_company_reducer";
+import DeleteContactReducer from "./delete_contact_reducer";
+import DeleteDealReducer from "./delete_deal_reducer";
+import DeleteInvoiceReducer from "./delete_invoice_reducer";
+import DeletePipelineReducer from "./delete_pipeline_reducer";
+import DeletePipelineStageReducer from "./delete_pipeline_stage_reducer";
+import DeleteProductReducer from "./delete_product_reducer";
+import DeleteUserReducer from "./delete_user_reducer";
+import DeleteWorkflowReducer from "./delete_workflow_reducer";
+import LoseDealReducer from "./lose_deal_reducer";
+import MarkMessageReadReducer from "./mark_message_read_reducer";
+import MoveDealStageReducer from "./move_deal_stage_reducer";
+import RecordPaymentReducer from "./record_payment_reducer";
+import RefundPaymentReducer from "./refund_payment_reducer";
+import RemoveInvoiceItemReducer from "./remove_invoice_item_reducer";
+import ReorderStagesReducer from "./reorder_stages_reducer";
+import SeedDemoDataReducer from "./seed_demo_data_reducer";
+import SendMessageReducer from "./send_message_reducer";
+import ToggleWorkflowStatusReducer from "./toggle_workflow_status_reducer";
+import UpdateCompanyReducer from "./update_company_reducer";
+import UpdateContactReducer from "./update_contact_reducer";
+import UpdateDealReducer from "./update_deal_reducer";
+import UpdateInvoiceReducer from "./update_invoice_reducer";
+import UpdatePipelineReducer from "./update_pipeline_reducer";
+import UpdatePipelineStageReducer from "./update_pipeline_stage_reducer";
+import UpdateProductReducer from "./update_product_reducer";
+import UpdateUserReducer from "./update_user_reducer";
+import UpdateWorkflowReducer from "./update_workflow_reducer";
+import WinDealReducer from "./win_deal_reducer";
 
 // Import all procedure arg schemas
 
 // Import all table schema definitions
+import ActivitiesRow from "./activities_table";
+import CompaniesRow from "./companies_table";
+import ContactsRow from "./contacts_table";
+import ConversationsRow from "./conversations_table";
+import DealsRow from "./deals_table";
+import InvoiceItemsRow from "./invoice_items_table";
+import InvoicesRow from "./invoices_table";
 import KgEdgeRow from "./kg_edge_table";
 import KgVertexRow from "./kg_vertex_table";
+import MessagesRow from "./messages_table";
+import PaymentsRow from "./payments_table";
+import PipelineStagesRow from "./pipeline_stages_table";
+import PipelinesRow from "./pipelines_table";
+import ProductsRow from "./products_table";
 import TenantMemberRow from "./tenant_member_table";
+import UsersRow from "./users_table";
+import WorkflowExecutionsRow from "./workflow_executions_table";
+import WorkflowsRow from "./workflows_table";
 
 /** Type-only namespace exports for generated type groups. */
 
 /** The schema information for all tables in this module. This is defined the same was as the tables would have been defined in the server. */
 const tablesSchema = __schema({
+  activities: __table({
+    name: 'activities',
+    indexes: [
+      { accessor: 'id', name: 'activities_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'tenant_contact_created', name: 'activities_tenant_id_contact_id_created_at_idx_btree', algorithm: 'btree', columns: [
+        'tenantId',
+        'contactId',
+        'createdAt',
+      ] },
+      { accessor: 'tenant_deal_created', name: 'activities_tenant_id_deal_id_created_at_idx_btree', algorithm: 'btree', columns: [
+        'tenantId',
+        'dealId',
+        'createdAt',
+      ] },
+      { accessor: 'tenant_id', name: 'activities_tenant_id_idx_btree', algorithm: 'btree', columns: [
+        'tenantId',
+      ] },
+    ],
+    constraints: [
+      { name: 'activities_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, ActivitiesRow),
+  companies: __table({
+    name: 'companies',
+    indexes: [
+      { accessor: 'id', name: 'companies_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'tenant_id', name: 'companies_tenant_id_idx_btree', algorithm: 'btree', columns: [
+        'tenantId',
+      ] },
+    ],
+    constraints: [
+      { name: 'companies_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, CompaniesRow),
+  contacts: __table({
+    name: 'contacts',
+    indexes: [
+      { accessor: 'id', name: 'contacts_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'tenant_email', name: 'contacts_tenant_id_email_idx_btree', algorithm: 'btree', columns: [
+        'tenantId',
+        'email',
+      ] },
+      { accessor: 'tenant_id', name: 'contacts_tenant_id_idx_btree', algorithm: 'btree', columns: [
+        'tenantId',
+      ] },
+      { accessor: 'tenant_phone', name: 'contacts_tenant_id_phone_idx_btree', algorithm: 'btree', columns: [
+        'tenantId',
+        'phone',
+      ] },
+      { accessor: 'tenant_status', name: 'contacts_tenant_id_status_idx_btree', algorithm: 'btree', columns: [
+        'tenantId',
+        'status',
+      ] },
+    ],
+    constraints: [
+      { name: 'contacts_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, ContactsRow),
+  conversations: __table({
+    name: 'conversations',
+    indexes: [
+      { accessor: 'contact_id', name: 'conversations_contact_id_idx_btree', algorithm: 'btree', columns: [
+        'contactId',
+      ] },
+      { accessor: 'id', name: 'conversations_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'tenant_contact', name: 'conversations_tenant_id_contact_id_idx_btree', algorithm: 'btree', columns: [
+        'tenantId',
+        'contactId',
+      ] },
+      { accessor: 'tenant_id', name: 'conversations_tenant_id_idx_btree', algorithm: 'btree', columns: [
+        'tenantId',
+      ] },
+    ],
+    constraints: [
+      { name: 'conversations_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, ConversationsRow),
+  deals: __table({
+    name: 'deals',
+    indexes: [
+      { accessor: 'contact_id', name: 'deals_contact_id_idx_btree', algorithm: 'btree', columns: [
+        'contactId',
+      ] },
+      { accessor: 'id', name: 'deals_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'pipeline_id', name: 'deals_pipeline_id_idx_btree', algorithm: 'btree', columns: [
+        'pipelineId',
+      ] },
+      { accessor: 'stage_id', name: 'deals_stage_id_idx_btree', algorithm: 'btree', columns: [
+        'stageId',
+      ] },
+      { accessor: 'tenant_contact', name: 'deals_tenant_id_contact_id_idx_btree', algorithm: 'btree', columns: [
+        'tenantId',
+        'contactId',
+      ] },
+      { accessor: 'tenant_id', name: 'deals_tenant_id_idx_btree', algorithm: 'btree', columns: [
+        'tenantId',
+      ] },
+      { accessor: 'tenant_pipeline', name: 'deals_tenant_id_pipeline_id_idx_btree', algorithm: 'btree', columns: [
+        'tenantId',
+        'pipelineId',
+      ] },
+      { accessor: 'tenant_stage', name: 'deals_tenant_id_stage_id_idx_btree', algorithm: 'btree', columns: [
+        'tenantId',
+        'stageId',
+      ] },
+    ],
+    constraints: [
+      { name: 'deals_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, DealsRow),
+  invoice_items: __table({
+    name: 'invoice_items',
+    indexes: [
+      { accessor: 'id', name: 'invoice_items_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'invoice_id', name: 'invoice_items_invoice_id_idx_btree', algorithm: 'btree', columns: [
+        'invoiceId',
+      ] },
+      { accessor: 'tenant_id', name: 'invoice_items_tenant_id_idx_btree', algorithm: 'btree', columns: [
+        'tenantId',
+      ] },
+      { accessor: 'tenant_invoice', name: 'invoice_items_tenant_id_invoice_id_idx_btree', algorithm: 'btree', columns: [
+        'tenantId',
+        'invoiceId',
+      ] },
+    ],
+    constraints: [
+      { name: 'invoice_items_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, InvoiceItemsRow),
+  invoices: __table({
+    name: 'invoices',
+    indexes: [
+      { accessor: 'contact_id', name: 'invoices_contact_id_idx_btree', algorithm: 'btree', columns: [
+        'contactId',
+      ] },
+      { accessor: 'id', name: 'invoices_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'tenant_id', name: 'invoices_tenant_id_idx_btree', algorithm: 'btree', columns: [
+        'tenantId',
+      ] },
+    ],
+    constraints: [
+      { name: 'invoices_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, InvoicesRow),
   kg_edge: __table({
     name: 'kg_edge',
     indexes: [
@@ -115,6 +322,93 @@ const tablesSchema = __schema({
       { name: 'kg_vertex_id_key', constraint: 'unique', columns: ['id'] },
     ],
   }, KgVertexRow),
+  messages: __table({
+    name: 'messages',
+    indexes: [
+      { accessor: 'conversation_created', name: 'messages_conversation_id_created_at_idx_btree', algorithm: 'btree', columns: [
+        'conversationId',
+        'createdAt',
+      ] },
+      { accessor: 'conversation_id', name: 'messages_conversation_id_idx_btree', algorithm: 'btree', columns: [
+        'conversationId',
+      ] },
+      { accessor: 'id', name: 'messages_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'tenant_id', name: 'messages_tenant_id_idx_btree', algorithm: 'btree', columns: [
+        'tenantId',
+      ] },
+    ],
+    constraints: [
+      { name: 'messages_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, MessagesRow),
+  payments: __table({
+    name: 'payments',
+    indexes: [
+      { accessor: 'contact_id', name: 'payments_contact_id_idx_btree', algorithm: 'btree', columns: [
+        'contactId',
+      ] },
+      { accessor: 'id', name: 'payments_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'tenant_id', name: 'payments_tenant_id_idx_btree', algorithm: 'btree', columns: [
+        'tenantId',
+      ] },
+    ],
+    constraints: [
+      { name: 'payments_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, PaymentsRow),
+  pipeline_stages: __table({
+    name: 'pipeline_stages',
+    indexes: [
+      { accessor: 'id', name: 'pipeline_stages_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'pipeline_id', name: 'pipeline_stages_pipeline_id_idx_btree', algorithm: 'btree', columns: [
+        'pipelineId',
+      ] },
+      { accessor: 'tenant_id', name: 'pipeline_stages_tenant_id_idx_btree', algorithm: 'btree', columns: [
+        'tenantId',
+      ] },
+      { accessor: 'tenant_pipeline', name: 'pipeline_stages_tenant_id_pipeline_id_idx_btree', algorithm: 'btree', columns: [
+        'tenantId',
+        'pipelineId',
+      ] },
+    ],
+    constraints: [
+      { name: 'pipeline_stages_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, PipelineStagesRow),
+  pipelines: __table({
+    name: 'pipelines',
+    indexes: [
+      { accessor: 'id', name: 'pipelines_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'tenant_id', name: 'pipelines_tenant_id_idx_btree', algorithm: 'btree', columns: [
+        'tenantId',
+      ] },
+    ],
+    constraints: [
+      { name: 'pipelines_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, PipelinesRow),
+  products: __table({
+    name: 'products',
+    indexes: [
+      { accessor: 'id', name: 'products_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'tenant_id', name: 'products_tenant_id_idx_btree', algorithm: 'btree', columns: [
+        'tenantId',
+      ] },
+    ],
+    constraints: [
+      { name: 'products_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, ProductsRow),
   tenant_member: __table({
     name: 'tenant_member',
     indexes: [
@@ -129,20 +423,102 @@ const tablesSchema = __schema({
       { name: 'tenant_member_identity_key', constraint: 'unique', columns: ['identity'] },
     ],
   }, TenantMemberRow),
+  users: __table({
+    name: 'users',
+    indexes: [
+      { accessor: 'email', name: 'users_email_idx_btree', algorithm: 'btree', columns: [
+        'email',
+      ] },
+      { accessor: 'id', name: 'users_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'tenant_id', name: 'users_tenant_id_idx_btree', algorithm: 'btree', columns: [
+        'tenantId',
+      ] },
+    ],
+    constraints: [
+      { name: 'users_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, UsersRow),
+  workflow_executions: __table({
+    name: 'workflow_executions',
+    indexes: [
+      { accessor: 'id', name: 'workflow_executions_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'tenant_id', name: 'workflow_executions_tenant_id_idx_btree', algorithm: 'btree', columns: [
+        'tenantId',
+      ] },
+      { accessor: 'workflow_id', name: 'workflow_executions_workflow_id_idx_btree', algorithm: 'btree', columns: [
+        'workflowId',
+      ] },
+    ],
+    constraints: [
+      { name: 'workflow_executions_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, WorkflowExecutionsRow),
+  workflows: __table({
+    name: 'workflows',
+    indexes: [
+      { accessor: 'id', name: 'workflows_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'tenant_id', name: 'workflows_tenant_id_idx_btree', algorithm: 'btree', columns: [
+        'tenantId',
+      ] },
+    ],
+    constraints: [
+      { name: 'workflows_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, WorkflowsRow),
 });
 
 /** The schema information for all reducers in this module. This is defined the same way as the reducers would have been defined in the server, except the body of the reducer is omitted in code generation. */
 const reducersSchema = __reducers(
+  __reducerSchema("add_invoice_item", AddInvoiceItemReducer),
   __reducerSchema("add_tenant_member", AddTenantMemberReducer),
-  __reducerSchema("bfs_traverse", BfsTraverseReducer),
-  __reducerSchema("create_edge", CreateEdgeReducer),
-  __reducerSchema("create_vertex", CreateVertexReducer),
-  __reducerSchema("delete_edge", DeleteEdgeReducer),
-  __reducerSchema("delete_vertex", DeleteVertexReducer),
-  __reducerSchema("find_neighbors", FindNeighborsReducer),
-  __reducerSchema("merge_vertices", MergeVerticesReducer),
-  __reducerSchema("update_edge", UpdateEdgeReducer),
-  __reducerSchema("update_vertex", UpdateVertexReducer),
+  __reducerSchema("archive_conversation", ArchiveConversationReducer),
+  __reducerSchema("create_activity", CreateActivityReducer),
+  __reducerSchema("create_company", CreateCompanyReducer),
+  __reducerSchema("create_contact", CreateContactReducer),
+  __reducerSchema("create_conversation", CreateConversationReducer),
+  __reducerSchema("create_deal", CreateDealReducer),
+  __reducerSchema("create_invoice", CreateInvoiceReducer),
+  __reducerSchema("create_pipeline", CreatePipelineReducer),
+  __reducerSchema("create_pipeline_stage", CreatePipelineStageReducer),
+  __reducerSchema("create_product", CreateProductReducer),
+  __reducerSchema("create_user", CreateUserReducer),
+  __reducerSchema("create_workflow", CreateWorkflowReducer),
+  __reducerSchema("delete_activity", DeleteActivityReducer),
+  __reducerSchema("delete_company", DeleteCompanyReducer),
+  __reducerSchema("delete_contact", DeleteContactReducer),
+  __reducerSchema("delete_deal", DeleteDealReducer),
+  __reducerSchema("delete_invoice", DeleteInvoiceReducer),
+  __reducerSchema("delete_pipeline", DeletePipelineReducer),
+  __reducerSchema("delete_pipeline_stage", DeletePipelineStageReducer),
+  __reducerSchema("delete_product", DeleteProductReducer),
+  __reducerSchema("delete_user", DeleteUserReducer),
+  __reducerSchema("delete_workflow", DeleteWorkflowReducer),
+  __reducerSchema("lose_deal", LoseDealReducer),
+  __reducerSchema("mark_message_read", MarkMessageReadReducer),
+  __reducerSchema("move_deal_stage", MoveDealStageReducer),
+  __reducerSchema("record_payment", RecordPaymentReducer),
+  __reducerSchema("refund_payment", RefundPaymentReducer),
+  __reducerSchema("remove_invoice_item", RemoveInvoiceItemReducer),
+  __reducerSchema("reorder_stages", ReorderStagesReducer),
+  __reducerSchema("seed_demo_data", SeedDemoDataReducer),
+  __reducerSchema("send_message", SendMessageReducer),
+  __reducerSchema("toggle_workflow_status", ToggleWorkflowStatusReducer),
+  __reducerSchema("update_company", UpdateCompanyReducer),
+  __reducerSchema("update_contact", UpdateContactReducer),
+  __reducerSchema("update_deal", UpdateDealReducer),
+  __reducerSchema("update_invoice", UpdateInvoiceReducer),
+  __reducerSchema("update_pipeline", UpdatePipelineReducer),
+  __reducerSchema("update_pipeline_stage", UpdatePipelineStageReducer),
+  __reducerSchema("update_product", UpdateProductReducer),
+  __reducerSchema("update_user", UpdateUserReducer),
+  __reducerSchema("update_workflow", UpdateWorkflowReducer),
+  __reducerSchema("win_deal", WinDealReducer),
 );
 
 /** The schema information for all procedures in this module. This is defined the same way as the procedures would have been defined in the server. */

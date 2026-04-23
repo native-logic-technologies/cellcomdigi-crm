@@ -10,6 +10,148 @@ import {
   type Infer as __Infer,
 } from "spacetimedb";
 
+export const Activities = __t.object("Activities", {
+  id: __t.u64(),
+  tenantId: __t.u64(),
+  contactId: __t.option(__t.u64()),
+  dealId: __t.option(__t.u64()),
+  get type() {
+    return ActivityType;
+  },
+  description: __t.string(),
+  createdBy: __t.u64(),
+  createdAt: __t.timestamp(),
+});
+export type Activities = __Infer<typeof Activities>;
+
+// The tagged union or sum type for the algebraic type `ActivityType`.
+export const ActivityType = __t.enum("ActivityType", {
+  Call: __t.unit(),
+  Meeting: __t.unit(),
+  Email: __t.unit(),
+  Whatsapp: __t.unit(),
+  Note: __t.unit(),
+  Task: __t.unit(),
+});
+export type ActivityType = __Infer<typeof ActivityType>;
+
+// The tagged union or sum type for the algebraic type `ChannelType`.
+export const ChannelType = __t.enum("ChannelType", {
+  Whatsapp: __t.unit(),
+  Tiktok: __t.unit(),
+  Email: __t.unit(),
+  Livechat: __t.unit(),
+  Pos: __t.unit(),
+});
+export type ChannelType = __Infer<typeof ChannelType>;
+
+export const Companies = __t.object("Companies", {
+  id: __t.u64(),
+  tenantId: __t.u64(),
+  name: __t.string(),
+  registrationNumber: __t.option(__t.string()),
+  industry: __t.option(__t.string()),
+  address: __t.string(),
+  billingAddress: __t.string(),
+  createdAt: __t.timestamp(),
+  updatedAt: __t.timestamp(),
+});
+export type Companies = __Infer<typeof Companies>;
+
+// The tagged union or sum type for the algebraic type `ContactSource`.
+export const ContactSource = __t.enum("ContactSource", {
+  Whatsapp: __t.unit(),
+  Tiktok: __t.unit(),
+  Email: __t.unit(),
+  Website: __t.unit(),
+  Manual: __t.unit(),
+  Pos: __t.unit(),
+});
+export type ContactSource = __Infer<typeof ContactSource>;
+
+// The tagged union or sum type for the algebraic type `ContactStatus`.
+export const ContactStatus = __t.enum("ContactStatus", {
+  Lead: __t.unit(),
+  Prospect: __t.unit(),
+  Customer: __t.unit(),
+  Churned: __t.unit(),
+});
+export type ContactStatus = __Infer<typeof ContactStatus>;
+
+export const Contacts = __t.object("Contacts", {
+  id: __t.u64(),
+  tenantId: __t.u64(),
+  email: __t.string(),
+  phone: __t.string(),
+  name: __t.string(),
+  companyId: __t.option(__t.u64()),
+  get source() {
+    return ContactSource;
+  },
+  get status() {
+    return ContactStatus;
+  },
+  assignedTo: __t.option(__t.u64()),
+  customFields: __t.string(),
+  createdAt: __t.timestamp(),
+  updatedAt: __t.timestamp(),
+});
+export type Contacts = __Infer<typeof Contacts>;
+
+// The tagged union or sum type for the algebraic type `ConversationStatus`.
+export const ConversationStatus = __t.enum("ConversationStatus", {
+  Active: __t.unit(),
+  Archived: __t.unit(),
+  Spam: __t.unit(),
+});
+export type ConversationStatus = __Infer<typeof ConversationStatus>;
+
+export const Conversations = __t.object("Conversations", {
+  id: __t.u64(),
+  tenantId: __t.u64(),
+  contactId: __t.u64(),
+  get channel() {
+    return ChannelType;
+  },
+  channelConversationId: __t.string(),
+  get status() {
+    return ConversationStatus;
+  },
+  lastMessageAt: __t.timestamp(),
+  unreadCount: __t.u32(),
+});
+export type Conversations = __Infer<typeof Conversations>;
+
+// The tagged union or sum type for the algebraic type `DealStatus`.
+export const DealStatus = __t.enum("DealStatus", {
+  Open: __t.unit(),
+  Won: __t.unit(),
+  Lost: __t.unit(),
+  Stalled: __t.unit(),
+});
+export type DealStatus = __Infer<typeof DealStatus>;
+
+export const Deals = __t.object("Deals", {
+  id: __t.u64(),
+  tenantId: __t.u64(),
+  name: __t.string(),
+  contactId: __t.u64(),
+  companyId: __t.option(__t.u64()),
+  pipelineId: __t.u64(),
+  stageId: __t.u64(),
+  value: __t.u64(),
+  currency: __t.string(),
+  probability: __t.u8(),
+  expectedClose: __t.option(__t.timestamp()),
+  actualClose: __t.option(__t.timestamp()),
+  get status() {
+    return DealStatus;
+  },
+  createdAt: __t.timestamp(),
+  updatedAt: __t.timestamp(),
+});
+export type Deals = __Infer<typeof Deals>;
+
 // The tagged union or sum type for the algebraic type `EntityType`.
 export const EntityType = __t.enum("EntityType", {
   Contact: __t.unit(),
@@ -22,6 +164,53 @@ export const EntityType = __t.enum("EntityType", {
   WorkflowRun: __t.unit(),
 });
 export type EntityType = __Infer<typeof EntityType>;
+
+export const InvoiceItems = __t.object("InvoiceItems", {
+  id: __t.u64(),
+  tenantId: __t.u64(),
+  invoiceId: __t.u64(),
+  productId: __t.option(__t.u64()),
+  description: __t.string(),
+  quantity: __t.u32(),
+  unitPrice: __t.u64(),
+  total: __t.u64(),
+});
+export type InvoiceItems = __Infer<typeof InvoiceItems>;
+
+// The tagged union or sum type for the algebraic type `InvoiceStatus`.
+export const InvoiceStatus = __t.enum("InvoiceStatus", {
+  Draft: __t.unit(),
+  Sent: __t.unit(),
+  Paid: __t.unit(),
+  Overdue: __t.unit(),
+  Cancelled: __t.unit(),
+});
+export type InvoiceStatus = __Infer<typeof InvoiceStatus>;
+
+export const Invoices = __t.object("Invoices", {
+  id: __t.u64(),
+  tenantId: __t.u64(),
+  invoiceNumber: __t.string(),
+  contactId: __t.u64(),
+  companyId: __t.option(__t.u64()),
+  issueDate: __t.timestamp(),
+  dueDate: __t.timestamp(),
+  subtotal: __t.u64(),
+  taxAmount: __t.u64(),
+  total: __t.u64(),
+  currency: __t.string(),
+  get status() {
+    return InvoiceStatus;
+  },
+  get lhdnValidationStatus() {
+    return LhdnValidationStatus;
+  },
+  lhdnUuid: __t.option(__t.string()),
+  lhdnQrCode: __t.option(__t.string()),
+  createdAt: __t.timestamp(),
+  updatedAt: __t.timestamp(),
+});
+export type Invoices = __Infer<typeof Invoices>;
 
 export const KgEdge = __t.object("KgEdge", {
   id: __t.u64(),
@@ -52,6 +241,137 @@ export const KgVertex = __t.object("KgVertex", {
 });
 export type KgVertex = __Infer<typeof KgVertex>;
 
+// The tagged union or sum type for the algebraic type `LhdnValidationStatus`.
+export const LhdnValidationStatus = __t.enum("LhdnValidationStatus", {
+  Pending: __t.unit(),
+  Validated: __t.unit(),
+  Failed: __t.unit(),
+});
+export type LhdnValidationStatus = __Infer<typeof LhdnValidationStatus>;
+
+// The tagged union or sum type for the algebraic type `MessageDirection`.
+export const MessageDirection = __t.enum("MessageDirection", {
+  Inbound: __t.unit(),
+  Outbound: __t.unit(),
+});
+export type MessageDirection = __Infer<typeof MessageDirection>;
+
+// The tagged union or sum type for the algebraic type `MessageSenderType`.
+export const MessageSenderType = __t.enum("MessageSenderType", {
+  Contact: __t.unit(),
+  User: __t.unit(),
+  System: __t.unit(),
+  Bot: __t.unit(),
+});
+export type MessageSenderType = __Infer<typeof MessageSenderType>;
+
+// The tagged union or sum type for the algebraic type `MessageStatus`.
+export const MessageStatus = __t.enum("MessageStatus", {
+  Sent: __t.unit(),
+  Delivered: __t.unit(),
+  Read: __t.unit(),
+  Failed: __t.unit(),
+});
+export type MessageStatus = __Infer<typeof MessageStatus>;
+
+export const Messages = __t.object("Messages", {
+  id: __t.u64(),
+  tenantId: __t.u64(),
+  conversationId: __t.u64(),
+  get senderType() {
+    return MessageSenderType;
+  },
+  senderId: __t.u64(),
+  body: __t.string(),
+  attachments: __t.string(),
+  get direction() {
+    return MessageDirection;
+  },
+  get status() {
+    return MessageStatus;
+  },
+  externalMessageId: __t.option(__t.string()),
+  createdAt: __t.timestamp(),
+});
+export type Messages = __Infer<typeof Messages>;
+
+// The tagged union or sum type for the algebraic type `PaymentMethod`.
+export const PaymentMethod = __t.enum("PaymentMethod", {
+  Fpx: __t.unit(),
+  Duitnow: __t.unit(),
+  Card: __t.unit(),
+  TngWallet: __t.unit(),
+  Grabpay: __t.unit(),
+  Boost: __t.unit(),
+  Shopeepay: __t.unit(),
+  Cash: __t.unit(),
+  BankTransfer: __t.unit(),
+});
+export type PaymentMethod = __Infer<typeof PaymentMethod>;
+
+// The tagged union or sum type for the algebraic type `PaymentStatus`.
+export const PaymentStatus = __t.enum("PaymentStatus", {
+  Pending: __t.unit(),
+  Completed: __t.unit(),
+  Failed: __t.unit(),
+  Refunded: __t.unit(),
+});
+export type PaymentStatus = __Infer<typeof PaymentStatus>;
+
+export const Payments = __t.object("Payments", {
+  id: __t.u64(),
+  tenantId: __t.u64(),
+  invoiceId: __t.option(__t.u64()),
+  contactId: __t.u64(),
+  amount: __t.u64(),
+  currency: __t.string(),
+  get method() {
+    return PaymentMethod;
+  },
+  gatewayReference: __t.option(__t.string()),
+  get status() {
+    return PaymentStatus;
+  },
+  createdAt: __t.timestamp(),
+});
+export type Payments = __Infer<typeof Payments>;
+
+export const PipelineStages = __t.object("PipelineStages", {
+  id: __t.u64(),
+  tenantId: __t.u64(),
+  pipelineId: __t.u64(),
+  name: __t.string(),
+  orderIndex: __t.u32(),
+  winProbability: __t.u8(),
+  createdAt: __t.timestamp(),
+  updatedAt: __t.timestamp(),
+});
+export type PipelineStages = __Infer<typeof PipelineStages>;
+
+export const Pipelines = __t.object("Pipelines", {
+  id: __t.u64(),
+  tenantId: __t.u64(),
+  name: __t.string(),
+  createdAt: __t.timestamp(),
+  updatedAt: __t.timestamp(),
+});
+export type Pipelines = __Infer<typeof Pipelines>;
+
+export const Products = __t.object("Products", {
+  id: __t.u64(),
+  tenantId: __t.u64(),
+  name: __t.string(),
+  sku: __t.option(__t.string()),
+  description: __t.option(__t.string()),
+  price: __t.u64(),
+  cost: __t.option(__t.u64()),
+  currency: __t.string(),
+  stockQuantity: __t.option(__t.u32()),
+  createdAt: __t.timestamp(),
+  updatedAt: __t.timestamp(),
+});
+export type Products = __Infer<typeof Products>;
+
 // The tagged union or sum type for the algebraic type `RelationType`.
 export const RelationType = __t.enum("RelationType", {
   BelongsTo: __t.unit(),
@@ -69,4 +389,52 @@ export const TenantMember = __t.object("TenantMember", {
   tenantId: __t.u64(),
 });
 export type TenantMember = __Infer<typeof TenantMember>;
+
+// The tagged union or sum type for the algebraic type `UserRole`.
+export const UserRole = __t.enum("UserRole", {
+  Admin: __t.unit(),
+  Manager: __t.unit(),
+  Sales: __t.unit(),
+  Viewer: __t.unit(),
+});
+export type UserRole = __Infer<typeof UserRole>;
+
+export const Users = __t.object("Users", {
+  id: __t.u64(),
+  tenantId: __t.u64(),
+  email: __t.string(),
+  name: __t.string(),
+  get role() {
+    return UserRole;
+  },
+  avatarUrl: __t.option(__t.string()),
+  createdAt: __t.timestamp(),
+  updatedAt: __t.timestamp(),
+});
+export type Users = __Infer<typeof Users>;
+
+export const WorkflowExecutions = __t.object("WorkflowExecutions", {
+  id: __t.u64(),
+  workflowId: __t.u64(),
+  tenantId: __t.u64(),
+  status: __t.string(),
+  startedAt: __t.timestamp(),
+  completedAt: __t.option(__t.timestamp()),
+  logs: __t.string(),
+});
+export type WorkflowExecutions = __Infer<typeof WorkflowExecutions>;
+
+export const Workflows = __t.object("Workflows", {
+  id: __t.u64(),
+  tenantId: __t.u64(),
+  name: __t.string(),
+  description: __t.string(),
+  triggerType: __t.string(),
+  triggerConfig: __t.string(),
+  steps: __t.string(),
+  status: __t.string(),
+  createdAt: __t.timestamp(),
+  updatedAt: __t.timestamp(),
+});
+export type Workflows = __Infer<typeof Workflows>;
 

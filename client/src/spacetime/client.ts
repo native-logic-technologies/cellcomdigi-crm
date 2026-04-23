@@ -8,7 +8,7 @@ function getHost(): string {
 }
 
 const HOST = getHost();
-const DB_NAME = (import.meta as any).env.VITE_SPACETIME_DB || 'cellcomcrm';
+const DB_NAME = (import.meta as any).env?.VITE_SPACETIME_DB || 'cellcom-crm';
 
 export const connectionBuilder = DbConnection.builder()
   .withUri(HOST)
@@ -17,12 +17,36 @@ export const connectionBuilder = DbConnection.builder()
     console.log('Connected to SpacetimeDB as', identity.toHexString());
     conn
       .subscriptionBuilder()
-      .onApplied(() => console.log('Subscriptions applied'))
+      .onApplied(() => {
+        console.log('Subscriptions applied');
+        // Seed demo data if database is empty
+        let hasData = false;
+        for (const _ of conn.db.contacts.iter()) { hasData = true; break; }
+        if (!hasData) {
+          console.log('Database empty — seeding demo data...');
+          (conn.reducers as any).seedDemoData({});
+        }
+      })
       .onError((_ctx: any) => console.error('Subscription error:', _ctx))
       .subscribe([
+        'SELECT * FROM users',
+        'SELECT * FROM contacts',
+        'SELECT * FROM companies',
+        'SELECT * FROM pipelines',
+        'SELECT * FROM pipeline_stages',
+        'SELECT * FROM deals',
+        'SELECT * FROM activities',
+        'SELECT * FROM conversations',
+        'SELECT * FROM messages',
+        'SELECT * FROM products',
+        'SELECT * FROM invoices',
+        'SELECT * FROM invoice_items',
+        'SELECT * FROM payments',
         'SELECT * FROM kg_vertex',
         'SELECT * FROM kg_edge',
         'SELECT * FROM tenant_member',
+        'SELECT * FROM workflows',
+        'SELECT * FROM workflow_executions',
       ]);
   })
   .onConnectError((_ctx, err) => {

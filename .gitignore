@@ -22,3 +22,11 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+# Secrets
+.env
+.env.local
+.env.*.local
+
+# Kimi exports
+kimi-export-*.md
