@@ -48,6 +48,8 @@ export const connectionBuilder = DbConnection.builder()
         'SELECT * FROM workflows',
         'SELECT * FROM workflow_executions',
         'SELECT * FROM deal_stage_history',
+        'SELECT * FROM social_campaigns',
+        'SELECT * FROM social_posts',
       ]);
   })
   .onConnectError((_ctx, err) => {

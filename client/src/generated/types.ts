@@ -35,6 +35,24 @@ export const ActivityType = __t.enum("ActivityType", {
 });
 export type ActivityType = __Infer<typeof ActivityType>;
 
+// The tagged union or sum type for the algebraic type `CampaignObjective`.
+export const CampaignObjective = __t.enum("CampaignObjective", {
+  Awareness: __t.unit(),
+  Engagement: __t.unit(),
+  Leads: __t.unit(),
+  Sales: __t.unit(),
+});
+export type CampaignObjective = __Infer<typeof CampaignObjective>;
+
+// The tagged union or sum type for the algebraic type `CampaignStatus`.
+export const CampaignStatus = __t.enum("CampaignStatus", {
+  Draft: __t.unit(),
+  Active: __t.unit(),
+  Completed: __t.unit(),
+  Paused: __t.unit(),
+});
+export type CampaignStatus = __Infer<typeof CampaignStatus>;
+
 // The tagged union or sum type for the algebraic type `ChannelType`.
 export const ChannelType = __t.enum("ChannelType", {
   Whatsapp: __t.unit(),
@@ -399,6 +417,66 @@ export const RelationType = __t.enum("RelationType", {
   Paid: __t.unit(),
 });
 export type RelationType = __Infer<typeof RelationType>;
+
+export const SocialCampaigns = __t.object("SocialCampaigns", {
+  id: __t.u64(),
+  tenantId: __t.u64(),
+  name: __t.string(),
+  theme: __t.string(),
+  get objective() {
+    return CampaignObjective;
+  },
+  platforms: __t.string(),
+  startDate: __t.timestamp(),
+  endDate: __t.timestamp(),
+  get status() {
+    return CampaignStatus;
+  },
+  createdAt: __t.timestamp(),
+  updatedAt: __t.timestamp(),
+});
+export type SocialCampaigns = __Infer<typeof SocialCampaigns>;
+
+// The tagged union or sum type for the algebraic type `SocialPostPlatform`.
+export const SocialPostPlatform = __t.enum("SocialPostPlatform", {
+  TikTok: __t.unit(),
+  Whatsapp: __t.unit(),
+  Instagram: __t.unit(),
+  Facebook: __t.unit(),
+});
+export type SocialPostPlatform = __Infer<typeof SocialPostPlatform>;
+
+// The tagged union or sum type for the algebraic type `SocialPostStatus`.
+export const SocialPostStatus = __t.enum("SocialPostStatus", {
+  Draft: __t.unit(),
+  Scheduled: __t.unit(),
+  Published: __t.unit(),
+  Failed: __t.unit(),
+});
+export type SocialPostStatus = __Infer<typeof SocialPostStatus>;
+
+export const SocialPosts = __t.object("SocialPosts", {
+  id: __t.u64(),
+  tenantId: __t.u64(),
+  campaignId: __t.option(__t.u64()),
+  get platform() {
+    return SocialPostPlatform;
+  },
+  content: __t.string(),
+  imageUrl: __t.option(__t.string()),
+  hashtags: __t.string(),
+  scheduledAt: __t.timestamp(),
+  publishedAt: __t.option(__t.timestamp()),
+  get status() {
+    return SocialPostStatus;
+  },
+  targetAudience: __t.option(__t.string()),
+  engagementEstimate: __t.option(__t.u32()),
+  metadata: __t.string(),
+  createdAt: __t.timestamp(),
+  updatedAt: __t.timestamp(),
+});
+export type SocialPosts = __Infer<typeof SocialPosts>;
 
 export const TenantMember = __t.object("TenantMember", {
   identity: __t.identity(),

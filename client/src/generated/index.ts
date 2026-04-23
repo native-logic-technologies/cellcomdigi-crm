@@ -46,6 +46,8 @@ import CreateInvoiceReducer from "./create_invoice_reducer";
 import CreatePipelineReducer from "./create_pipeline_reducer";
 import CreatePipelineStageReducer from "./create_pipeline_stage_reducer";
 import CreateProductReducer from "./create_product_reducer";
+import CreateSocialCampaignReducer from "./create_social_campaign_reducer";
+import CreateSocialPostReducer from "./create_social_post_reducer";
 import CreateUserReducer from "./create_user_reducer";
 import CreateWorkflowReducer from "./create_workflow_reducer";
 import DeleteActivityReducer from "./delete_activity_reducer";
@@ -56,11 +58,14 @@ import DeleteInvoiceReducer from "./delete_invoice_reducer";
 import DeletePipelineReducer from "./delete_pipeline_reducer";
 import DeletePipelineStageReducer from "./delete_pipeline_stage_reducer";
 import DeleteProductReducer from "./delete_product_reducer";
+import DeleteSocialCampaignReducer from "./delete_social_campaign_reducer";
+import DeleteSocialPostReducer from "./delete_social_post_reducer";
 import DeleteUserReducer from "./delete_user_reducer";
 import DeleteWorkflowReducer from "./delete_workflow_reducer";
 import LoseDealReducer from "./lose_deal_reducer";
 import MarkMessageReadReducer from "./mark_message_read_reducer";
 import MoveDealStageReducer from "./move_deal_stage_reducer";
+import PublishSocialPostReducer from "./publish_social_post_reducer";
 import RecordPaymentReducer from "./record_payment_reducer";
 import RefundPaymentReducer from "./refund_payment_reducer";
 import RemoveInvoiceItemReducer from "./remove_invoice_item_reducer";
@@ -75,6 +80,8 @@ import UpdateInvoiceReducer from "./update_invoice_reducer";
 import UpdatePipelineReducer from "./update_pipeline_reducer";
 import UpdatePipelineStageReducer from "./update_pipeline_stage_reducer";
 import UpdateProductReducer from "./update_product_reducer";
+import UpdateSocialCampaignReducer from "./update_social_campaign_reducer";
+import UpdateSocialPostReducer from "./update_social_post_reducer";
 import UpdateUserReducer from "./update_user_reducer";
 import UpdateWorkflowReducer from "./update_workflow_reducer";
 import WinDealReducer from "./win_deal_reducer";
@@ -97,6 +104,8 @@ import PaymentsRow from "./payments_table";
 import PipelineStagesRow from "./pipeline_stages_table";
 import PipelinesRow from "./pipelines_table";
 import ProductsRow from "./products_table";
+import SocialCampaignsRow from "./social_campaigns_table";
+import SocialPostsRow from "./social_posts_table";
 import TenantMemberRow from "./tenant_member_table";
 import UsersRow from "./users_table";
 import WorkflowExecutionsRow from "./workflow_executions_table";
@@ -427,6 +436,34 @@ const tablesSchema = __schema({
       { name: 'products_id_key', constraint: 'unique', columns: ['id'] },
     ],
   }, ProductsRow),
+  social_campaigns: __table({
+    name: 'social_campaigns',
+    indexes: [
+      { accessor: 'id', name: 'social_campaigns_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'tenant_id', name: 'social_campaigns_tenant_id_idx_btree', algorithm: 'btree', columns: [
+        'tenantId',
+      ] },
+    ],
+    constraints: [
+      { name: 'social_campaigns_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, SocialCampaignsRow),
+  social_posts: __table({
+    name: 'social_posts',
+    indexes: [
+      { accessor: 'id', name: 'social_posts_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'tenant_id', name: 'social_posts_tenant_id_idx_btree', algorithm: 'btree', columns: [
+        'tenantId',
+      ] },
+    ],
+    constraints: [
+      { name: 'social_posts_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, SocialPostsRow),
   tenant_member: __table({
     name: 'tenant_member',
     indexes: [
@@ -505,6 +542,8 @@ const reducersSchema = __reducers(
   __reducerSchema("create_pipeline", CreatePipelineReducer),
   __reducerSchema("create_pipeline_stage", CreatePipelineStageReducer),
   __reducerSchema("create_product", CreateProductReducer),
+  __reducerSchema("create_social_campaign", CreateSocialCampaignReducer),
+  __reducerSchema("create_social_post", CreateSocialPostReducer),
   __reducerSchema("create_user", CreateUserReducer),
   __reducerSchema("create_workflow", CreateWorkflowReducer),
   __reducerSchema("delete_activity", DeleteActivityReducer),
@@ -515,11 +554,14 @@ const reducersSchema = __reducers(
   __reducerSchema("delete_pipeline", DeletePipelineReducer),
   __reducerSchema("delete_pipeline_stage", DeletePipelineStageReducer),
   __reducerSchema("delete_product", DeleteProductReducer),
+  __reducerSchema("delete_social_campaign", DeleteSocialCampaignReducer),
+  __reducerSchema("delete_social_post", DeleteSocialPostReducer),
   __reducerSchema("delete_user", DeleteUserReducer),
   __reducerSchema("delete_workflow", DeleteWorkflowReducer),
   __reducerSchema("lose_deal", LoseDealReducer),
   __reducerSchema("mark_message_read", MarkMessageReadReducer),
   __reducerSchema("move_deal_stage", MoveDealStageReducer),
+  __reducerSchema("publish_social_post", PublishSocialPostReducer),
   __reducerSchema("record_payment", RecordPaymentReducer),
   __reducerSchema("refund_payment", RefundPaymentReducer),
   __reducerSchema("remove_invoice_item", RemoveInvoiceItemReducer),
@@ -534,6 +576,8 @@ const reducersSchema = __reducers(
   __reducerSchema("update_pipeline", UpdatePipelineReducer),
   __reducerSchema("update_pipeline_stage", UpdatePipelineStageReducer),
   __reducerSchema("update_product", UpdateProductReducer),
+  __reducerSchema("update_social_campaign", UpdateSocialCampaignReducer),
+  __reducerSchema("update_social_post", UpdateSocialPostReducer),
   __reducerSchema("update_user", UpdateUserReducer),
   __reducerSchema("update_workflow", UpdateWorkflowReducer),
   __reducerSchema("win_deal", WinDealReducer),

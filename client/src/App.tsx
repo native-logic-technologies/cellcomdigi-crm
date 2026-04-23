@@ -13,6 +13,7 @@ import Invoices from './components/Invoices';
 import GraphView from './components/GraphView';
 import AutomationBuilder from './components/AutomationBuilder';
 import Analytics from './components/Analytics';
+import SocialPlanner from './components/SocialPlanner';
 
 function AppContent() {
   const [page, setPage] = useState<Page>('dashboard');
@@ -55,6 +56,7 @@ function AppContent() {
       {page === 'graph' && <GraphView />}
       {page === 'automations' && <AutomationBuilder />}
       {page === 'analytics' && <Analytics />}
+      {page === 'social' && <SocialPlanner />}
     </Layout>
   );
 }

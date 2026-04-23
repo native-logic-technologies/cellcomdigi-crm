@@ -82,6 +82,22 @@ const relationType = t.enum('RelationType', [
   'WorksAt', 'Triggered', 'RelatedTo', 'Paid',
 ]);
 
+const socialPostPlatform = t.enum('SocialPostPlatform', [
+  'TikTok', 'Whatsapp', 'Instagram', 'Facebook',
+]);
+
+const socialPostStatus = t.enum('SocialPostStatus', [
+  'Draft', 'Scheduled', 'Published', 'Failed',
+]);
+
+const campaignObjective = t.enum('CampaignObjective', [
+  'Awareness', 'Engagement', 'Leads', 'Sales',
+]);
+
+const campaignStatus = t.enum('CampaignStatus', [
+  'Draft', 'Active', 'Completed', 'Paused',
+]);
+
 // ---------------------------------------------------------------------------
 // Operational Tables
 // ---------------------------------------------------------------------------
@@ -446,6 +462,44 @@ const dealStageHistory = table(
   }
 );
 
+const socialCampaigns = table(
+  { name: 'social_campaigns', public: true },
+  {
+    id: t.u64().primaryKey().autoInc(),
+    tenant_id: t.u64().index('btree'),
+    name: t.string(),
+    theme: t.string(),
+    objective: campaignObjective,
+    platforms: t.string(), // JSON array of platform tags
+    start_date: t.timestamp(),
+    end_date: t.timestamp(),
+    status: campaignStatus,
+    created_at: t.timestamp(),
+    updated_at: t.timestamp(),
+  }
+);
+
+const socialPosts = table(
+  { name: 'social_posts', public: true },
+  {
+    id: t.u64().primaryKey().autoInc(),
+    tenant_id: t.u64().index('btree'),
+    campaign_id: t.option(t.u64()),
+    platform: socialPostPlatform,
+    content: t.string(),
+    image_url: t.option(t.string()),
+    hashtags: t.string(), // JSON array
+    scheduled_at: t.timestamp(),
+    published_at: t.option(t.timestamp()),
+    status: socialPostStatus,
+    target_audience: t.option(t.string()),
+    engagement_estimate: t.option(t.u32()),
+    metadata: t.string(), // JSON for platform extras
+    created_at: t.timestamp(),
+    updated_at: t.timestamp(),
+  }
+);
+
 // ---------------------------------------------------------------------------
 // Schema
 // ---------------------------------------------------------------------------
@@ -470,6 +524,8 @@ const spacetimedb = schema({
   workflows,
   workflow_executions: workflowExecutions,
   deal_stage_history: dealStageHistory,
+  social_campaigns: socialCampaigns,
+  social_posts: socialPosts,
 });
 
 export default spacetimedb;
@@ -1639,6 +1695,45 @@ export const seedDemoData = spacetimedb.reducer(
       });
     }
 
+    // Seed social campaigns
+    const campaign = ctx.db.social_campaigns.insert({
+      id: 0n, tenant_id: TENANT_ID,
+      name: 'Q2 Digital Growth',
+      theme: 'SME digital transformation stories',
+      objective: { tag: 'Awareness' },
+      platforms: '["TikTok","Whatsapp","Instagram"]',
+      start_date: now,
+      end_date: Timestamp.fromDate(new Date(now.toDate().getTime() + 30 * 86400000)),
+      status: { tag: 'Active' },
+      created_at: now, updated_at: now,
+    });
+
+    // Seed social posts
+    const postContents = [
+      { platform: 'TikTok', content: '[EN] 5 ways Malaysian SMEs are using CRM to close deals 2x faster 🚀 #SMEMalaysia #CRM [BM] 5 cara SME Malaysia guna CRM untuk tutup deal 2x lebih pantas!', hashtags: '["#SMEMalaysia","#CRM","#DigitalTransformation","#PerniagaanMalaysia"]' },
+      { platform: 'Whatsapp', content: '[EN] Hi {{contact.name}}! We just helped a logistics company in Shah Alam save 15 hours/week with automation. Want to see how? Reply YES [BM] Hi {{contact.name}}! Kami baru bantu syarikat logistik di Shah Alam jimat 15 jam/minggu dengan automasi. Nak tahu caranya? Balas YA', hashtags: '[]' },
+      { platform: 'Instagram', content: '[EN] Behind the scenes: How our team builds AI workflows for Malaysian F&B businesses ☕🇲🇾 [BM] Di sebalik tabir: Bagaimana pasukan kami bina workflow AI untuk perniagaan F&B Malaysia', hashtags: '["#AIForBusiness","#MalaysiaSME","#FBusiness","#TechMalaysia"]' },
+    ];
+    for (let i = 0; i < postContents.length; i++) {
+      const p = postContents[i];
+      const scheduled = Timestamp.fromDate(new Date(now.toDate().getTime() + (i + 1) * 86400000));
+      ctx.db.social_posts.insert({
+        id: 0n, tenant_id: TENANT_ID,
+        campaign_id: campaign.id,
+        platform: { tag: p.platform },
+        content: p.content,
+        image_url: undefined,
+        hashtags: p.hashtags,
+        scheduled_at: scheduled,
+        published_at: undefined,
+        status: { tag: 'Draft' },
+        target_audience: 'SME owners 25-45 in Klang Valley',
+        engagement_estimate: undefined,
+        metadata: '{}',
+        created_at: now, updated_at: now,
+      });
+    }
+
     console.info('Demo data seeded successfully');
   }
 );
@@ -1714,5 +1809,143 @@ export const deleteWorkflow = spacetimedb.reducer(
     const wf = ctx.db.workflows.id.find(id);
     if (!wf) throw new Error('Workflow not found');
     ctx.db.workflows.id.delete(id);
+  }
+);
+
+// ---------------------------------------------------------------------------
+// Social Campaign reducers
+// ---------------------------------------------------------------------------
+
+export const createSocialCampaign = spacetimedb.reducer(
+  {
+    tenant_id: t.u64(),
+    name: t.string(),
+    theme: t.string(),
+    objective: campaignObjective,
+    platforms: t.string(),
+    start_date: t.timestamp(),
+    end_date: t.timestamp(),
+  },
+  (ctx: any, { tenant_id, name, theme, objective, platforms, start_date, end_date }) => {
+    requireTenant(ctx, tenant_id);
+    ctx.db.social_campaigns.insert({
+      id: 0n, tenant_id, name, theme, objective, platforms,
+      start_date, end_date,
+      status: { tag: 'Draft' },
+      created_at: ctx.timestamp,
+      updated_at: ctx.timestamp,
+    });
+  }
+);
+
+export const updateSocialCampaign = spacetimedb.reducer(
+  {
+    id: t.u64(),
+    name: t.string(),
+    theme: t.string(),
+    objective: campaignObjective,
+    platforms: t.string(),
+    start_date: t.timestamp(),
+    end_date: t.timestamp(),
+    status: campaignStatus,
+  },
+  (ctx: any, { id, name, theme, objective, platforms, start_date, end_date, status }) => {
+    const camp = ctx.db.social_campaigns.id.find(id);
+    if (!camp) throw new Error('Campaign not found');
+    requireTenant(ctx, camp.tenant_id);
+    ctx.db.social_campaigns.id.update({
+      ...camp, name, theme, objective, platforms, start_date, end_date, status,
+      updated_at: ctx.timestamp,
+    });
+  }
+);
+
+export const deleteSocialCampaign = spacetimedb.reducer(
+  { id: t.u64() },
+  (ctx: any, { id }) => {
+    const camp = ctx.db.social_campaigns.id.find(id);
+    if (!camp) throw new Error('Campaign not found');
+    requireTenant(ctx, camp.tenant_id);
+    ctx.db.social_campaigns.id.delete(id);
+  }
+);
+
+// ---------------------------------------------------------------------------
+// Social Post reducers
+// ---------------------------------------------------------------------------
+
+export const createSocialPost = spacetimedb.reducer(
+  {
+    tenant_id: t.u64(),
+    campaign_id: t.option(t.u64()),
+    platform: socialPostPlatform,
+    content: t.string(),
+    image_url: t.option(t.string()),
+    hashtags: t.string(),
+    scheduled_at: t.timestamp(),
+    target_audience: t.option(t.string()),
+    metadata: t.string(),
+  },
+  (ctx: any, { tenant_id, campaign_id, platform, content, image_url, hashtags, scheduled_at, target_audience, metadata }) => {
+    requireTenant(ctx, tenant_id);
+    ctx.db.social_posts.insert({
+      id: 0n, tenant_id, campaign_id, platform, content,
+      image_url, hashtags, scheduled_at,
+      published_at: undefined,
+      status: { tag: 'Draft' },
+      target_audience, engagement_estimate: undefined,
+      metadata,
+      created_at: ctx.timestamp,
+      updated_at: ctx.timestamp,
+    });
+  }
+);
+
+export const updateSocialPost = spacetimedb.reducer(
+  {
+    id: t.u64(),
+    campaign_id: t.option(t.u64()),
+    platform: socialPostPlatform,
+    content: t.string(),
+    image_url: t.option(t.string()),
+    hashtags: t.string(),
+    scheduled_at: t.timestamp(),
+    target_audience: t.option(t.string()),
+    metadata: t.string(),
+  },
+  (ctx: any, { id, campaign_id, platform, content, image_url, hashtags, scheduled_at, target_audience, metadata }) => {
+    const post = ctx.db.social_posts.id.find(id);
+    if (!post) throw new Error('Post not found');
+    requireTenant(ctx, post.tenant_id);
+    ctx.db.social_posts.id.update({
+      ...post, campaign_id, platform, content, image_url,
+      hashtags, scheduled_at, target_audience, metadata,
+      updated_at: ctx.timestamp,
+    });
+  }
+);
+
+export const deleteSocialPost = spacetimedb.reducer(
+  { id: t.u64() },
+  (ctx: any, { id }) => {
+    const post = ctx.db.social_posts.id.find(id);
+    if (!post) throw new Error('Post not found');
+    requireTenant(ctx, post.tenant_id);
+    ctx.db.social_posts.id.delete(id);
+  }
+);
+
+export const publishSocialPost = spacetimedb.reducer(
+  { id: t.u64() },
+  (ctx: any, { id }) => {
+    const post = ctx.db.social_posts.id.find(id);
+    if (!post) throw new Error('Post not found');
+    requireTenant(ctx, post.tenant_id);
+    ctx.db.social_posts.id.update({
+      ...post,
+      status: { tag: 'Published' },
+      published_at: ctx.timestamp,
+      updated_at: ctx.timestamp,
+    });
   }
 );
