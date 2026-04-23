@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import {
   Share2, Plus, Calendar as CalendarIcon,
   ChevronLeft, ChevronRight, Clock, Image as ImageIcon,
-  Send, Edit2, Trash2, Wand2,
+  Send, Edit2, Trash2, Wand2, Check,
 } from 'lucide-react';
 import { useTable, useDb } from '../spacetime/hooks';
 import PageHeader from './PageHeader';
@@ -53,6 +53,9 @@ export default function SocialPlanner() {
   const [deletingId, setDeletingId] = useState<bigint | null>(null);
   const [platformFilter, setPlatformFilter] = useState<string>('');
   const [aiModalOpen, setAiModalOpen] = useState(false);
+  const [broadcastOpen, setBroadcastOpen] = useState(false);
+  const [broadcastPost, setBroadcastPost] = useState<any | null>(null);
+  const [tiktokConnected, setTiktokConnected] = useState(() => localStorage.getItem('tiktok_connected') === 'true');
 
   const activeCampaign = campaigns[0];
 
@@ -154,6 +157,23 @@ export default function SocialPlanner() {
           </Select>
           <Button size="sm" variant="light" className="text-slate-500" onPress={() => setCampaignModalOpen(true)}>
             <CalendarIcon className="w-4 h-4 mr-1" /> Campaigns
+          </Button>
+          <Button
+            size="sm"
+            variant={tiktokConnected ? 'light' : 'bordered'}
+            className={tiktokConnected ? 'text-slate-500' : 'border-slate-900 text-slate-900'}
+            onPress={() => {
+              if (tiktokConnected) {
+                localStorage.removeItem('tiktok_connected');
+                setTiktokConnected(false);
+              } else {
+                localStorage.setItem('tiktok_connected', 'true');
+                setTiktokConnected(true);
+                success('TikTok connected (demo mode)');
+              }
+            }}
+          >
+            {tiktokConnected ? 'TikTok ✓' : 'Connect TikTok'}
           </Button>
         </CardBody>
       </Card>
@@ -280,7 +300,12 @@ export default function SocialPlanner() {
                       </div>
                     </div>
                     <div className="flex justify-end gap-1 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      {post.status?.tag === 'Draft' && (
+                      {post.status?.tag === 'Draft' && post.platform?.tag === 'Whatsapp' && (
+                        <Button isIconOnly size="sm" variant="light" className="text-slate-400 hover:text-emerald-600 h-7 w-7" onPress={() => { setBroadcastPost(post); setBroadcastOpen(true); }}>
+                          <Send className="w-3.5 h-3.5" />
+                        </Button>
+                      )}
+                      {post.status?.tag === 'Draft' && post.platform?.tag !== 'Whatsapp' && (
                         <Button isIconOnly size="sm" variant="light" className="text-slate-400 hover:text-emerald-600 h-7 w-7" onPress={() => handlePublish(post.id)}>
                           <Send className="w-3.5 h-3.5" />
                         </Button>
@@ -338,6 +363,13 @@ export default function SocialPlanner() {
         }}
       />
 
+      {/* Broadcast Modal */}
+      <BroadcastModal
+        isOpen={broadcastOpen}
+        onClose={() => setBroadcastOpen(false)}
+        post={broadcastPost}
+      />
+
       <ConfirmDialog
         isOpen={confirmOpen}
         onClose={() => setConfirmOpen(false)}
@@ -347,6 +379,78 @@ export default function SocialPlanner() {
         confirmLabel="Delete"
       />
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// BroadcastModal — WhatsApp contact selector
+// ---------------------------------------------------------------------------
+
+function BroadcastModal({ isOpen, onClose, post }: { isOpen: boolean; onClose: () => void; post: any | null }) {
+  const db = useDb();
+  const { success } = useToast();
+  const [contacts] = useTable('contacts');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  if (!post) return null;
+
+  const toggleContact = (id: string) => {
+    const next = new Set(selectedIds);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setSelectedIds(next);
+  };
+
+  const sendBroadcast = () => {
+    if (!db || selectedIds.size === 0) return;
+    const ids = Array.from(selectedIds).map((s) => BigInt(s));
+    (db.reducers as any).broadcastWhatsApp({
+      postId: post.id,
+      contactIds: JSON.stringify(ids),
+    });
+    success(`Broadcast sent to ${selectedIds.size} contacts`);
+    setSelectedIds(new Set());
+    onClose();
+  };
+
+  return (
+    <Modal isOpen={isOpen} onOpenChange={(open) => !open && onClose()} size="md">
+      <ModalContent>
+        <ModalHeader className="text-slate-900 font-outfit">WhatsApp Broadcast</ModalHeader>
+        <ModalBody className="gap-3">
+          <p className="text-sm text-slate-500">Select contacts to send this post to:</p>
+          <div className="max-h-[300px] overflow-y-auto space-y-1">
+            {contacts.map((c: any) => (
+              <button
+                key={c.id.toString()}
+                onClick={() => toggleContact(c.id.toString())}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors ${
+                  selectedIds.has(c.id.toString()) ? 'bg-brand-50 border border-brand-200' : 'bg-slate-50/50 border border-transparent hover:bg-slate-50'
+                }`}
+              >
+                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                  selectedIds.has(c.id.toString()) ? 'bg-brand-600 border-brand-600' : 'border-slate-300'
+                }`}>
+                  {selectedIds.has(c.id.toString()) && <Check className="w-3 h-3 text-white" />}
+                </div>
+                <Avatar name={c.name} size="sm" className="bg-brand-100 text-brand-700" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-slate-800">{c.name}</p>
+                  <p className="text-xs text-slate-400">{c.phone}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-slate-400">{selectedIds.size} contacts selected</p>
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="light" onPress={onClose}>Cancel</Button>
+          <Button color="primary" className="bg-brand-600" onPress={sendBroadcast} isDisabled={selectedIds.size === 0}>
+            <Send className="w-4 h-4 mr-1" /> Send to {selectedIds.size}
+          </Button>
+        </ModalFooter>
+      </ModalContent>
+    </Modal>
   );
 }
 

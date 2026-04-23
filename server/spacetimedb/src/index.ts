@@ -1949,3 +1949,67 @@ export const publishSocialPost = spacetimedb.reducer(
     });
   }
 );
+
+export const broadcastWhatsApp = spacetimedb.reducer(
+  {
+    post_id: t.u64(),
+    contact_ids: t.string(), // JSON array of contact IDs
+  },
+  (ctx: any, { post_id, contact_ids }) => {
+    const post = ctx.db.social_posts.id.find(post_id);
+    if (!post) throw new Error('Post not found');
+    requireTenant(ctx, post.tenant_id);
+
+    const ids: bigint[] = JSON.parse(contact_ids);
+    for (const contactId of ids) {
+      // Find or create WhatsApp conversation
+      let conv = ctx.db.conversations.tenant_contact.find([post.tenant_id, contactId]);
+      if (!conv || conv.channel.tag !== 'Whatsapp') {
+        // Create a new WhatsApp conversation
+        const newConv = ctx.db.conversations.insert({
+          id: 0n,
+          tenant_id: post.tenant_id,
+          contact_id: contactId,
+          channel: { tag: 'Whatsapp' },
+          channel_conversation_id: `wa-${contactId}`,
+          status: { tag: 'Active' },
+          last_message_at: ctx.timestamp,
+          unread_count: 0,
+          created_at: ctx.timestamp,
+          updated_at: ctx.timestamp,
+        });
+        conv = newConv;
+      }
+
+      // Send the broadcast message
+      ctx.db.messages.insert({
+        id: 0n,
+        tenant_id: post.tenant_id,
+        conversation_id: conv.id,
+        sender_type: { tag: 'User' },
+        sender_id: 1n,
+        body: post.content,
+        attachments: post.image_url ? JSON.stringify([{ url: post.image_url }]) : '[]',
+        direction: { tag: 'Outbound' },
+        status: { tag: 'Sent' },
+        external_message_id: undefined,
+        created_at: ctx.timestamp,
+      });
+
+      // Update conversation last message
+      ctx.db.conversations.id.update({
+        ...conv,
+        last_message_at: ctx.timestamp,
+        updated_at: ctx.timestamp,
+      });
+    }
+
+    // Mark post as published
+    ctx.db.social_posts.id.update({
+      ...post,
+      status: { tag: 'Published' },
+      published_at: ctx.timestamp,
+      updated_at: ctx.timestamp,
+    });
+  }
+);

@@ -37,6 +37,7 @@ import {
 import AddInvoiceItemReducer from "./add_invoice_item_reducer";
 import AddTenantMemberReducer from "./add_tenant_member_reducer";
 import ArchiveConversationReducer from "./archive_conversation_reducer";
+import BroadcastWhatsAppReducer from "./broadcast_whats_app_reducer";
 import CreateActivityReducer from "./create_activity_reducer";
 import CreateCompanyReducer from "./create_company_reducer";
 import CreateContactReducer from "./create_contact_reducer";
@@ -533,6 +534,7 @@ const reducersSchema = __reducers(
   __reducerSchema("add_invoice_item", AddInvoiceItemReducer),
   __reducerSchema("add_tenant_member", AddTenantMemberReducer),
   __reducerSchema("archive_conversation", ArchiveConversationReducer),
+  __reducerSchema("broadcast_whats_app", BroadcastWhatsAppReducer),
   __reducerSchema("create_activity", CreateActivityReducer),
   __reducerSchema("create_company", CreateCompanyReducer),
   __reducerSchema("create_contact", CreateContactReducer),
