@@ -51,8 +51,12 @@ export const Companies = __t.object("Companies", {
   name: __t.string(),
   registrationNumber: __t.option(__t.string()),
   industry: __t.option(__t.string()),
+  phone: __t.option(__t.string()),
+  email: __t.option(__t.string()),
+  website: __t.option(__t.string()),
   address: __t.string(),
   billingAddress: __t.string(),
+  notes: __t.string(),
   createdAt: __t.timestamp(),
   updatedAt: __t.timestamp(),
 });
@@ -121,6 +125,17 @@ export const Conversations = __t.object("Conversations", {
   unreadCount: __t.u32(),
 });
 export type Conversations = __Infer<typeof Conversations>;
+
+export const DealStageHistory = __t.object("DealStageHistory", {
+  id: __t.u64(),
+  tenantId: __t.u64(),
+  dealId: __t.u64(),
+  fromStageId: __t.option(__t.u64()),
+  toStageId: __t.u64(),
+  movedBy: __t.option(__t.u64()),
+  movedAt: __t.timestamp(),
+});
+export type DealStageHistory = __Infer<typeof DealStageHistory>;
 
 // The tagged union or sum type for the algebraic type `DealStatus`.
 export const DealStatus = __t.enum("DealStatus", {

@@ -1,32 +1,43 @@
 import { useState } from 'react';
-import { Search, Pencil, Trash2 } from 'lucide-react';
+import { Search, Pencil, Trash2, Eye, Phone, Mail, Globe, StickyNote } from 'lucide-react';
 import { useTable, useDb } from '../spacetime/hooks';
+import { useToast } from '../hooks/useToast';
 import PageHeader from './PageHeader';
 import ConfirmDialog from './ConfirmDialog';
+import CompanyDrawer from './CompanyDrawer';
 import {
   Button, Input, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter,
   Table, TableHeader, TableColumn, TableBody, TableRow, TableCell,
-  Card, CardBody, Avatar
+  Card, CardBody, Avatar, Textarea
 } from '@nextui-org/react';
 
 export default function Companies() {
   const db = useDb();
+  const { success } = useToast();
   const [companies] = useTable('companies');
   const [search, setSearch] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<bigint | null>(null);
-  const [form, setForm] = useState({ name: '', registrationNumber: '', industry: '', address: '', billingAddress: '' });
+  const [drawerCompany, setDrawerCompany] = useState<any | null>(null);
+  const [form, setForm] = useState({
+    name: '', registrationNumber: '', industry: '',
+    phone: '', email: '', website: '',
+    address: '', billingAddress: '', notes: ''
+  });
 
   const filtered = companies.filter((c: any) => {
     const q = search.toLowerCase();
-    return !q || c.name.toLowerCase().includes(q) || (c.registrationNumber ?? '').toLowerCase().includes(q);
+    return !q || c.name.toLowerCase().includes(q)
+      || (c.registrationNumber ?? '').toLowerCase().includes(q)
+      || (c.email ?? '').toLowerCase().includes(q)
+      || (c.phone ?? '').toLowerCase().includes(q);
   });
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ name: '', registrationNumber: '', industry: '', address: '', billingAddress: '' });
+    setForm({ name: '', registrationNumber: '', industry: '', phone: '', email: '', website: '', address: '', billingAddress: '', notes: '' });
     setModalOpen(true);
   };
 
@@ -36,28 +47,35 @@ export default function Companies() {
       name: company.name,
       registrationNumber: company.registrationNumber ?? '',
       industry: company.industry ?? '',
-      address: company.address,
-      billingAddress: company.billingAddress,
+      phone: company.phone ?? '',
+      email: company.email ?? '',
+      website: company.website ?? '',
+      address: company.address ?? '{}',
+      billingAddress: company.billingAddress ?? '{}',
+      notes: company.notes ?? '',
     });
     setModalOpen(true);
   };
 
   const save = () => {
     if (!db || !form.name) return;
+    const payload = {
+      name: form.name,
+      registrationNumber: form.registrationNumber || undefined,
+      industry: form.industry || undefined,
+      phone: form.phone || undefined,
+      email: form.email || undefined,
+      website: form.website || undefined,
+      address: form.address || '{}',
+      billingAddress: form.billingAddress || '{}',
+      notes: form.notes || '',
+    };
     if (editing) {
-      (db.reducers as any).updateCompany({
-        id: editing.id, name: form.name,
-        registrationNumber: form.registrationNumber || undefined,
-        industry: form.industry || undefined,
-        address: form.address, billingAddress: form.billingAddress,
-      });
+      (db.reducers as any).updateCompany({ id: editing.id, ...payload });
+      success('Company updated', `${payload.name} has been updated.`);
     } else {
-      (db.reducers as any).createCompany({
-        tenantId: 1n, name: form.name,
-        registrationNumber: form.registrationNumber || undefined,
-        industry: form.industry || undefined,
-        address: form.address || '{}', billingAddress: form.billingAddress || '{}',
-      });
+      (db.reducers as any).createCompany({ tenantId: 1n, ...payload });
+      success('Company created', `${payload.name} has been added.`);
     }
     setModalOpen(false);
   };
@@ -70,6 +88,7 @@ export default function Companies() {
   const remove = () => {
     if (!db || !deletingId) return;
     (db.reducers as any).deleteCompany({ id: deletingId });
+    success('Company deleted', 'The company has been removed.');
     setDeletingId(null);
   };
 
@@ -96,6 +115,7 @@ export default function Companies() {
               <TableColumn>NAME</TableColumn>
               <TableColumn>REG. NUMBER</TableColumn>
               <TableColumn>INDUSTRY</TableColumn>
+              <TableColumn>CONTACT</TableColumn>
               <TableColumn className="text-right">ACTIONS</TableColumn>
             </TableHeader>
             <TableBody emptyContent="No companies found">
@@ -104,13 +124,25 @@ export default function Companies() {
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar name={c.name} size="sm" className="bg-emerald-100 text-emerald-700" />
-                      <span className="font-medium text-slate-800">{c.name}</span>
+                      <div>
+                        <span className="font-medium text-slate-800">{c.name}</span>
+                        {c.website && <p className="text-[11px] text-slate-400">{c.website}</p>}
+                      </div>
                     </div>
                   </TableCell>
                   <TableCell className="text-slate-600">{c.registrationNumber ?? '—'}</TableCell>
                   <TableCell className="text-slate-600">{c.industry ?? '—'}</TableCell>
                   <TableCell>
+                    <div className="flex flex-col gap-0.5 text-xs text-slate-500">
+                      {c.email && <span className="flex items-center gap-1"><Mail className="w-3 h-3" /> {c.email}</span>}
+                      {c.phone && <span className="flex items-center gap-1"><Phone className="w-3 h-3" /> {c.phone}</span>}
+                    </div>
+                  </TableCell>
+                  <TableCell>
                     <div className="flex justify-end gap-1">
+                      <Button isIconOnly size="sm" variant="light" className="text-slate-400 hover:text-slate-700" onPress={() => setDrawerCompany(c)}>
+                        <Eye className="w-4 h-4" />
+                      </Button>
                       <Button isIconOnly size="sm" variant="light" className="text-slate-400 hover:text-slate-700" onPress={() => openEdit(c)}>
                         <Pencil className="w-4 h-4" />
                       </Button>
@@ -126,7 +158,7 @@ export default function Companies() {
         </CardBody>
       </Card>
 
-      <Modal isOpen={modalOpen} onOpenChange={setModalOpen}>
+      <Modal isOpen={modalOpen} onOpenChange={setModalOpen} size="lg">
         <ModalContent>
           <ModalHeader className="text-slate-900 font-outfit">{editing ? 'Edit Company' : 'New Company'}</ModalHeader>
           <ModalBody className="gap-4">
@@ -135,6 +167,16 @@ export default function Companies() {
               <Input label="Registration Number" value={form.registrationNumber} onValueChange={(v) => setForm({ ...form, registrationNumber: v })} />
               <Input label="Industry" value={form.industry} onValueChange={(v) => setForm({ ...form, industry: v })} />
             </div>
+            <div className="grid grid-cols-3 gap-4">
+              <Input label="Phone" value={form.phone} onValueChange={(v) => setForm({ ...form, phone: v })} startContent={<Phone className="w-3.5 h-3.5 text-slate-400" />} />
+              <Input label="Email" type="email" value={form.email} onValueChange={(v) => setForm({ ...form, email: v })} startContent={<Mail className="w-3.5 h-3.5 text-slate-400" />} />
+              <Input label="Website" value={form.website} onValueChange={(v) => setForm({ ...form, website: v })} startContent={<Globe className="w-3.5 h-3.5 text-slate-400" />} />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <Textarea label="Address (JSON)" value={form.address} onValueChange={(v) => setForm({ ...form, address: v })} />
+              <Textarea label="Billing Address (JSON)" value={form.billingAddress} onValueChange={(v) => setForm({ ...form, billingAddress: v })} />
+            </div>
+            <Textarea label="Notes" value={form.notes} onValueChange={(v) => setForm({ ...form, notes: v })} startContent={<StickyNote className="w-3.5 h-3.5 text-slate-400" />} />
           </ModalBody>
           <ModalFooter>
             <Button variant="light" onPress={() => setModalOpen(false)}>Cancel</Button>
@@ -144,6 +186,8 @@ export default function Companies() {
       </Modal>
 
       <ConfirmDialog isOpen={confirmOpen} onClose={() => setConfirmOpen(false)} onConfirm={remove} title="Delete company?" description="This will permanently remove the company and unlink related contacts." confirmLabel="Delete" />
+
+      {drawerCompany && <CompanyDrawer company={drawerCompany} onClose={() => setDrawerCompany(null)} />}
     </div>
   );
 }

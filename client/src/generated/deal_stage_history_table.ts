@@ -10,17 +10,12 @@ import {
   type Infer as __Infer,
 } from "spacetimedb";
 
-import {
-  RelationType,
-} from "./types";
-
-export default {
-  tenantId: __t.u64(),
-  sourceVertexId: __t.u64(),
-  targetVertexId: __t.u64(),
-  get relationType() {
-    return RelationType;
-  },
-  properties: __t.string(),
-  weight: __t.option(__t.f32()),
-};
+export default __t.row({
+  id: __t.u64().primaryKey(),
+  tenantId: __t.u64().name("tenant_id"),
+  dealId: __t.u64().name("deal_id"),
+  fromStageId: __t.option(__t.u64()).name("from_stage_id"),
+  toStageId: __t.u64().name("to_stage_id"),
+  movedBy: __t.option(__t.u64()).name("moved_by"),
+  movedAt: __t.timestamp().name("moved_at"),
+});

@@ -133,8 +133,12 @@ const companies = table(
     name: t.string(),
     registration_number: t.option(t.string()),
     industry: t.option(t.string()),
+    phone: t.option(t.string()),
+    email: t.option(t.string()),
+    website: t.option(t.string()),
     address: t.string(), // JSON
     billing_address: t.string(), // JSON
+    notes: t.string(), // JSON or plain text
     created_at: t.timestamp(),
     updated_at: t.timestamp(),
   }
@@ -428,6 +432,19 @@ const workflowExecutions = table(
   }
 );
 
+const dealStageHistory = table(
+  { name: 'deal_stage_history', public: true },
+  {
+    id: t.u64().primaryKey().autoInc(),
+    tenant_id: t.u64().index('btree'),
+    deal_id: t.u64().index('btree'),
+    from_stage_id: t.option(t.u64()),
+    to_stage_id: t.u64(),
+    moved_by: t.option(t.u64()),
+    moved_at: t.timestamp(),
+  }
+);
+
 // ---------------------------------------------------------------------------
 // Schema
 // ---------------------------------------------------------------------------
@@ -451,6 +468,7 @@ const spacetimedb = schema({
   tenant_member: tenantMember,
   workflows,
   workflow_executions: workflowExecutions,
+  deal_stage_history: dealStageHistory,
 });
 
 export default spacetimedb;
@@ -705,10 +723,14 @@ export const createCompany = spacetimedb.reducer(
     name: t.string(),
     registration_number: t.option(t.string()),
     industry: t.option(t.string()),
+    phone: t.option(t.string()),
+    email: t.option(t.string()),
+    website: t.option(t.string()),
     address: t.string(),
     billing_address: t.string(),
+    notes: t.string(),
   },
-  (ctx: any, { tenant_id, name, registration_number, industry, address, billing_address }) => {
+  (ctx: any, { tenant_id, name, registration_number, industry, phone, email, website, address, billing_address, notes }) => {
     requireTenant(ctx, tenant_id);
     const company = ctx.db.companies.insert({
       id: 0n,
@@ -716,12 +738,16 @@ export const createCompany = spacetimedb.reducer(
       name,
       registration_number,
       industry,
+      phone,
+      email,
+      website,
       address,
       billing_address,
+      notes,
       created_at: ctx.timestamp,
       updated_at: ctx.timestamp,
     });
-    syncKgVertex(ctx, tenant_id, { tag: 'Company' }, 'companies', company.id, { name, registration_number, industry });
+    syncKgVertex(ctx, tenant_id, { tag: 'Company' }, 'companies', company.id, { name, registration_number, industry, email, phone });
   }
 );
 
@@ -731,10 +757,14 @@ export const updateCompany = spacetimedb.reducer(
     name: t.string(),
     registration_number: t.option(t.string()),
     industry: t.option(t.string()),
+    phone: t.option(t.string()),
+    email: t.option(t.string()),
+    website: t.option(t.string()),
     address: t.string(),
     billing_address: t.string(),
+    notes: t.string(),
   },
-  (ctx: any, { id, name, registration_number, industry, address, billing_address }) => {
+  (ctx: any, { id, name, registration_number, industry, phone, email, website, address, billing_address, notes }) => {
     const company = ctx.db.companies.id.find(id);
     if (!company) throw new Error('Company not found');
     requireTenant(ctx, company.tenant_id);
@@ -743,11 +773,15 @@ export const updateCompany = spacetimedb.reducer(
       name,
       registration_number,
       industry,
+      phone,
+      email,
+      website,
       address,
       billing_address,
+      notes,
       updated_at: ctx.timestamp,
     });
-    syncKgVertex(ctx, company.tenant_id, { tag: 'Company' }, 'companies', id, { name, registration_number, industry });
+    syncKgVertex(ctx, company.tenant_id, { tag: 'Company' }, 'companies', id, { name, registration_number, industry, email, phone });
   }
 );
 
@@ -971,6 +1005,15 @@ export const moveDealStage = spacetimedb.reducer(
     const stage = ctx.db.pipeline_stages.id.find(stage_id);
     if (!stage) throw new Error('Stage not found');
     ctx.db.deals.id.update({ ...deal, stage_id, probability: stage.win_probability, updated_at: ctx.timestamp });
+    ctx.db.deal_stage_history.insert({
+      id: 0n,
+      tenant_id: deal.tenant_id,
+      deal_id: id,
+      from_stage_id: deal.stage_id,
+      to_stage_id: stage_id,
+      moved_by: undefined,
+      moved_at: ctx.timestamp,
+    });
   }
 );
 
@@ -1421,16 +1464,20 @@ export const seedDemoData = spacetimedb.reducer(
 
     // Seed companies
     const companies = [
-      { name: 'TechVenture Sdn Bhd', reg: '201901012345', industry: 'Technology' },
-      { name: 'GreenLeaf Catering', reg: '202003067890', industry: 'F&B' },
-      { name: 'Metro Logistics', reg: '201505012233', industry: 'Logistics' },
+      { name: 'TechVenture Sdn Bhd', reg: '201901012345', industry: 'Technology', phone: '+603-2288-1000', email: 'hello@techventure.my', website: 'https://techventure.my', address: '{"street":"Level 12, Menara Global","city":"Kuala Lumpur","postcode":"50450","state":"Wilayah Persekutuan"}', notes: 'Long-term client. Interested in enterprise package.' },
+      { name: 'GreenLeaf Catering', reg: '202003067890', industry: 'F&B', phone: '+603-7722-3300', email: 'orders@greenleaf.my', website: 'https://greenleaf.my', address: '{"street":"No 45, Jalan SS15/4","city":"Subang Jaya","postcode":"47500","state":"Selangor"}', notes: 'Catering for corporate events. Seasonal demand spikes.' },
+      { name: 'Metro Logistics', reg: '201505012233', industry: 'Logistics', phone: '+603-5566-8800', email: 'biz@metrolog.my', website: 'https://metrolog.my', address: '{"street":"Lot 12, Jalan Kemajuan","city":"Shah Alam","postcode":"40150","state":"Selangor"}', notes: 'Wants integration with their WMS.' },
+      { name: 'Durian Digital Marketing', reg: '202110054321', industry: 'Marketing', phone: '+6019-876-5432', email: 'hello@durian.digital', website: 'https://durian.digital', address: '{"street":"Co-labs, One Utama","city":"Petaling Jaya","postcode":"47800","state":"Selangor"}', notes: 'Referral from TechVenture. High growth startup.' },
+      { name: 'Palm Oil Plantation Berhad', reg: '199805002211', industry: 'Agriculture', phone: '+609-555-1212', email: 'procurement@popb.my', website: 'https://popb.my', address: '{"street":"KM45, Jalan Kuantan","city":"Kuantan","postcode":"25200","state":"Pahang"}', notes: 'Large enterprise. Long sales cycle.' },
     ];
     const companyIds: bigint[] = [];
     for (const c of companies) {
       const co = ctx.db.companies.insert({
         id: 0n, tenant_id: TENANT_ID, name: c.name,
         registration_number: c.reg, industry: c.industry,
-        address: '{}', billing_address: '{}',
+        phone: c.phone, email: c.email, website: c.website,
+        address: c.address, billing_address: c.address,
+        notes: c.notes,
         created_at: now, updated_at: now,
       });
       companyIds.push(co.id);
@@ -1441,8 +1488,11 @@ export const seedDemoData = spacetimedb.reducer(
       { name: 'Ahmad bin Ismail', email: 'ahmad@techventure.my', phone: '+6012-345-6789', status: 'Lead', source: 'Website', companyIdx: 0 },
       { name: 'Siti Nurhaliza', email: 'siti@greenleaf.my', phone: '+6013-456-7890', status: 'Prospect', source: 'Whatsapp', companyIdx: 1 },
       { name: 'Rajesh Kumar', email: 'rajesh@metrolog.my', phone: '+6014-567-8901', status: 'Customer', source: 'Email', companyIdx: 2 },
-      { name: 'Lim Mei Ling', email: 'meiling@techventure.my', phone: '+6015-678-9012', status: 'Lead', source: 'Tiktok', companyIdx: undefined },
+      { name: 'Lim Mei Ling', email: 'meiling@techventure.my', phone: '+6015-678-9012', status: 'Lead', source: 'Tiktok', companyIdx: 0 },
       { name: 'Mohd Faizal', email: 'faizal@greenleaf.my', phone: '+6016-789-0123', status: 'Customer', source: 'Manual', companyIdx: 1 },
+      { name: 'Wong Kah Wai', email: 'kahwai@durian.digital', phone: '+6017-890-1234', status: 'Prospect', source: 'Website', companyIdx: 3 },
+      { name: 'Nurul Ain', email: 'nurul@popb.my', phone: '+6018-901-2345', status: 'Lead', source: 'Email', companyIdx: 4 },
+      { name: 'Chen Wei Ming', email: 'weiming@techventure.my', phone: '+6019-012-3456', status: 'Customer', source: 'Referral', companyIdx: 0 },
     ];
     const contactIds: bigint[] = [];
     for (const c of contacts) {
@@ -1462,6 +1512,10 @@ export const seedDemoData = spacetimedb.reducer(
       { name: 'GreenLeaf Annual Contract', contactIdx: 1, companyIdx: 1, stageIdx: 3, value: 850000n },
       { name: 'Metro Logistics Integration', contactIdx: 2, companyIdx: 2, stageIdx: 1, value: 2200000n },
       { name: 'TechVenture Support Package', contactIdx: 3, companyIdx: 0, stageIdx: 0, value: 450000n },
+      { name: 'Durian Digital Onboarding', contactIdx: 5, companyIdx: 3, stageIdx: 2, value: 680000n },
+      { name: 'POPB Enterprise License', contactIdx: 6, companyIdx: 4, stageIdx: 1, value: 5000000n },
+      { name: 'GreenLeaf Event Package', contactIdx: 4, companyIdx: 1, stageIdx: 4, value: 320000n },
+      { name: 'TechVenture Add-on Users', contactIdx: 7, companyIdx: 0, stageIdx: 3, value: 280000n },
     ];
     for (const d of deals) {
       ctx.db.deals.insert({
@@ -1482,6 +1536,7 @@ export const seedDemoData = spacetimedb.reducer(
     const products = [
       { name: 'CRM Pro License', sku: 'CRM-PRO-01', price: 150000n },
       { name: 'Support Premium', sku: 'SUP-PREM-01', price: 45000n },
+      { name: 'CRM Enterprise Bundle', sku: 'CRM-ENT-01', price: 450000n },
     ];
     for (const p of products) {
       ctx.db.products.insert({
@@ -1492,12 +1547,42 @@ export const seedDemoData = spacetimedb.reducer(
       });
     }
 
+    // Seed invoices
+    const invoices = [
+      { num: 'INV-2024-001', contactIdx: 2, total: 2200000n, status: 'Paid' },
+      { num: 'INV-2024-002', contactIdx: 4, total: 320000n, status: 'Paid' },
+      { num: 'INV-2024-003', contactIdx: 0, total: 750000n, status: 'Sent' },
+      { num: 'INV-2024-004', contactIdx: 5, total: 340000n, status: 'Overdue' },
+    ];
+    for (const inv of invoices) {
+      const issue = new Date(now.toDate().getTime() - 30 * 86400000);
+      const due = new Date(issue.getTime() + 14 * 86400000);
+      ctx.db.invoices.insert({
+        id: 0n, tenant_id: TENANT_ID,
+        invoice_number: inv.num,
+        contact_id: contactIds[inv.contactIdx],
+        issue_date: issue.toISOString(),
+        due_date: due.toISOString(),
+        subtotal: BigInt(Math.round(Number(inv.total) * 0.9)),
+        tax_amount: BigInt(Math.round(Number(inv.total) * 0.1)),
+        total: inv.total,
+        currency: 'MYR',
+        status: { tag: inv.status },
+        lhdn_validation_status: { tag: 'Validated' },
+        created_at: now, updated_at: now,
+      });
+    }
+
     // Seed activities
     const activities = [
       { contactIdx: 0, type: 'Call', desc: 'Initial discovery call with Ahmad' },
       { contactIdx: 1, type: 'Whatsapp', desc: 'Sent pricing brochure to Siti' },
       { contactIdx: 2, type: 'Meeting', desc: 'Quarterly review with Rajesh' },
       { contactIdx: 0, type: 'Email', desc: 'Follow-up on proposal' },
+      { contactIdx: 3, type: 'Call', desc: 'Demo walkthrough for Mei Ling' },
+      { contactIdx: 5, type: 'Meeting', desc: 'Kickoff with Durian Digital team' },
+      { contactIdx: 6, type: 'Email', desc: 'Sent enterprise quote to Nurul' },
+      { contactIdx: 7, type: 'Whatsapp', desc: 'Confirmed add-on license count' },
     ];
     for (const a of activities) {
       ctx.db.activities.insert({
@@ -1507,6 +1592,48 @@ export const seedDemoData = spacetimedb.reducer(
         type: { tag: a.type },
         description: a.desc,
         created_by: 1n,
+        created_at: now,
+      });
+    }
+
+    // Seed conversations
+    const convs = [
+      { contactIdx: 0, channel: 'Email', unread: 2 },
+      { contactIdx: 1, channel: 'Whatsapp', unread: 1 },
+      { contactIdx: 2, channel: 'Email', unread: 0 },
+    ];
+    const convIds: bigint[] = [];
+    for (const cv of convs) {
+      const c = ctx.db.conversations.insert({
+        id: 0n, tenant_id: TENANT_ID,
+        contact_id: contactIds[cv.contactIdx],
+        channel: { tag: cv.channel },
+        channel_conversation_id: `demo-${cv.contactIdx}`,
+        status: { tag: 'Active' },
+        unread_count: cv.unread,
+        last_message_at: now,
+        created_at: now, updated_at: now,
+      });
+      convIds.push(c.id);
+    }
+
+    // Seed messages
+    const msgs = [
+      { convIdx: 0, body: 'Hi, can we schedule a demo this week?', dir: 'Inbound' },
+      { convIdx: 0, body: 'Sure, how about Thursday 2pm?', dir: 'Outbound' },
+      { convIdx: 1, body: 'Thanks for the quote, we need to discuss internally.', dir: 'Inbound' },
+      { convIdx: 2, body: 'Invoice INV-2024-001 has been paid. Thank you!', dir: 'Outbound' },
+    ];
+    for (const m of msgs) {
+      ctx.db.messages.insert({
+        id: 0n, tenant_id: TENANT_ID,
+        conversation_id: convIds[m.convIdx],
+        sender_type: { tag: m.dir === 'Inbound' ? 'Contact' : 'User' },
+        sender_id: 1n,
+        body: m.body,
+        attachments: '[]',
+        direction: { tag: m.dir },
+        status: { tag: 'Read' },
         created_at: now,
       });
     }

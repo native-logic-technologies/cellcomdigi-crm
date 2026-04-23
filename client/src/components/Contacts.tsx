@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { Search, Pencil, Trash2 } from 'lucide-react';
+import { Search, Pencil, Trash2, Eye } from 'lucide-react';
 import { useTable, useDb } from '../spacetime/hooks';
+import { useToast } from '../hooks/useToast';
 import PageHeader from './PageHeader';
 import ConfirmDialog from './ConfirmDialog';
+import ContactDrawer from './ContactDrawer';
 import {
   Button, Input, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter,
   Table, TableHeader, TableColumn, TableBody, TableRow, TableCell,
@@ -17,6 +19,7 @@ const statusColorMap: Record<string, 'warning' | 'primary' | 'success' | 'defaul
 
 export default function Contacts() {
   const db = useDb();
+  const { success } = useToast();
   const [contacts] = useTable('contacts');
   const [companies] = useTable('companies');
   const [search, setSearch] = useState('');
@@ -25,6 +28,7 @@ export default function Contacts() {
   const [editing, setEditing] = useState<any | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<bigint | null>(null);
+  const [drawerContact, setDrawerContact] = useState<any | null>(null);
   const [form, setForm] = useState({
     name: '', email: '', phone: '', companyId: '', status: 'Lead', source: 'Manual',
   });
@@ -69,12 +73,14 @@ export default function Contacts() {
         companyId, status: { tag: form.status }, assignedTo: editing.assignedTo,
         customFields: editing.customFields,
       });
+      success('Contact updated', `${form.name} has been updated.`);
     } else {
       (db.reducers as any).createContact({
         tenantId: 1n, email: form.email, phone: form.phone, name: form.name,
         companyId, source: { tag: form.source }, status: { tag: form.status },
         assignedTo: undefined, customFields: '{}',
       });
+      success('Contact created', `${form.name} has been added.`);
     }
     setModalOpen(false);
   };
@@ -87,6 +93,7 @@ export default function Contacts() {
   const remove = () => {
     if (!db || !deletingId) return;
     (db.reducers as any).deleteContact({ id: deletingId });
+    success('Contact deleted', 'The contact has been removed.');
     setDeletingId(null);
   };
 
@@ -135,10 +142,13 @@ export default function Contacts() {
               {filtered.map((c: any) => (
                 <TableRow key={c.id.toString()} className="hover:bg-slate-50/60 transition-colors">
                   <TableCell>
-                    <div className="flex items-center gap-3">
+                    <button
+                      className="flex items-center gap-3 text-left hover:opacity-80 transition-opacity"
+                      onClick={() => setDrawerContact(c)}
+                    >
                       <Avatar name={c.name} size="sm" className="bg-brand-100 text-brand-700" />
                       <span className="font-medium text-slate-800">{c.name}</span>
-                    </div>
+                    </button>
                   </TableCell>
                   <TableCell className="text-slate-600">{c.email}</TableCell>
                   <TableCell className="text-slate-600">{c.phone}</TableCell>
@@ -153,6 +163,9 @@ export default function Contacts() {
                   </TableCell>
                   <TableCell>
                     <div className="flex justify-end gap-1">
+                      <Button isIconOnly size="sm" variant="light" className="text-slate-400 hover:text-slate-700" onPress={() => setDrawerContact(c)}>
+                        <Eye className="w-4 h-4" />
+                      </Button>
                       <Button isIconOnly size="sm" variant="light" className="text-slate-400 hover:text-slate-700" onPress={() => openEdit(c)}>
                         <Pencil className="w-4 h-4" />
                       </Button>
@@ -204,6 +217,8 @@ export default function Contacts() {
         description="This will permanently remove the contact from your CRM."
         confirmLabel="Delete"
       />
+
+      {drawerContact && <ContactDrawer contact={drawerContact} onClose={() => setDrawerContact(null)} />}
     </div>
   );
 }

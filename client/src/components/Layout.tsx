@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, Users, Building2, Banknote, Inbox,
   ShoppingCart, FileText, Network, Menu, X, Bell, Moon, Sun,
-  Settings, LogOut, ChevronLeft, ChevronRight, Wand2
+  Settings, LogOut, ChevronLeft, ChevronRight, Wand2, TrendingUp
 } from 'lucide-react';
 import { useState } from 'react';
 import { useConnectionStatus } from '../spacetime/hooks';
@@ -10,7 +10,7 @@ import {
   Input, Tooltip, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem,
 } from '@nextui-org/react';
 
-type Page = 'dashboard' | 'contacts' | 'companies' | 'deals' | 'inbox' | 'products' | 'invoices' | 'graph' | 'automations';
+type Page = 'dashboard' | 'contacts' | 'companies' | 'deals' | 'inbox' | 'products' | 'invoices' | 'graph' | 'automations' | 'analytics';
 
 interface NavSection {
   label: string;
@@ -26,6 +26,7 @@ const navSections: NavSection[] = [
       { id: 'contacts', label: 'Contacts', icon: Users },
       { id: 'companies', label: 'Companies', icon: Building2 },
       { id: 'automations', label: 'Automations', icon: Wand2 },
+      { id: 'analytics', label: 'Analytics', icon: TrendingUp },
     ],
   },
   {
@@ -54,12 +55,15 @@ const pageTitles: Record<Page, { title: string; subtitle: string }> = {
   invoices: { title: 'Invoices', subtitle: 'Billing and LHDN e-invoicing' },
   graph: { title: 'Knowledge Graph', subtitle: 'Visualize relationships across your data' },
   automations: { title: 'Automations', subtitle: 'AI-powered workflow automation' },
+  analytics: { title: 'Analytics', subtitle: 'Pipeline performance and conversion metrics' },
 };
 
-export default function Layout({ page, setPage, children }: {
+export default function Layout({ page, setPage, children, user, onLogout }: {
   page: Page;
   setPage: (p: Page) => void;
   children: React.ReactNode;
+  user: { name: string; email: string } | null;
+  onLogout: () => void;
 }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -163,12 +167,12 @@ export default function Layout({ page, setPage, children }: {
           <div className={`flex items-center gap-3 px-2 py-2 rounded-xl ${collapsed ? 'justify-center' : ''}`}>
             <Avatar
               size="sm"
-              name="Demo User"
+              name={user?.name ?? 'Guest'}
               className="bg-gradient-to-br from-brand-500 to-brand-700 text-white text-xs shrink-0"
             />
             {!collapsed && (
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-slate-700 truncate">Demo User</p>
+                <p className="text-sm font-medium text-slate-700 truncate">{user?.name ?? 'Guest'}</p>
                 <div className="flex items-center gap-1.5">
                   <span className={`w-1.5 h-1.5 rounded-full ${connected ? 'bg-emerald-500' : 'bg-rose-500'}`} />
                   <span className="text-[11px] text-slate-400">{connected ? 'Online' : 'Offline'}</span>
@@ -231,13 +235,13 @@ export default function Layout({ page, setPage, children }: {
               <DropdownTrigger>
                 <Avatar
                   size="sm"
-                  name="Demo User"
+                  name={user?.name ?? 'Guest'}
                   className="bg-gradient-to-br from-brand-500 to-brand-700 text-white text-xs cursor-pointer"
                 />
               </DropdownTrigger>
               <DropdownMenu aria-label="User menu">
                 <DropdownItem key="settings" startContent={<Settings className="w-4 h-4" />}>Settings</DropdownItem>
-                <DropdownItem key="logout" startContent={<LogOut className="w-4 h-4" />} className="text-rose-600">
+                <DropdownItem key="logout" startContent={<LogOut className="w-4 h-4" />} className="text-rose-600" onPress={onLogout}>
                   Log out
                 </DropdownItem>
               </DropdownMenu>

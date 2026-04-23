@@ -9,6 +9,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
     "@nextui-org/react": "^2.6.11",
     "cytoscape": "^3.26.0",
     "framer-motion": "^12.38.0",

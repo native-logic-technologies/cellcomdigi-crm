@@ -16,8 +16,12 @@ export default __t.row({
   name: __t.string(),
   registrationNumber: __t.option(__t.string()).name("registration_number"),
   industry: __t.option(__t.string()),
+  phone: __t.option(__t.string()),
+  email: __t.option(__t.string()),
+  website: __t.option(__t.string()),
   address: __t.string(),
   billingAddress: __t.string().name("billing_address"),
+  notes: __t.string(),
   createdAt: __t.timestamp().name("created_at"),
   updatedAt: __t.timestamp().name("updated_at"),
 });

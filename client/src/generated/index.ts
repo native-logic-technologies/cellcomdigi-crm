@@ -86,6 +86,7 @@ import ActivitiesRow from "./activities_table";
 import CompaniesRow from "./companies_table";
 import ContactsRow from "./contacts_table";
 import ConversationsRow from "./conversations_table";
+import DealStageHistoryRow from "./deal_stage_history_table";
 import DealsRow from "./deals_table";
 import InvoiceItemsRow from "./invoice_items_table";
 import InvoicesRow from "./invoices_table";
@@ -190,6 +191,23 @@ const tablesSchema = __schema({
       { name: 'conversations_id_key', constraint: 'unique', columns: ['id'] },
     ],
   }, ConversationsRow),
+  deal_stage_history: __table({
+    name: 'deal_stage_history',
+    indexes: [
+      { accessor: 'deal_id', name: 'deal_stage_history_deal_id_idx_btree', algorithm: 'btree', columns: [
+        'dealId',
+      ] },
+      { accessor: 'id', name: 'deal_stage_history_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'tenant_id', name: 'deal_stage_history_tenant_id_idx_btree', algorithm: 'btree', columns: [
+        'tenantId',
+      ] },
+    ],
+    constraints: [
+      { name: 'deal_stage_history_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, DealStageHistoryRow),
   deals: __table({
     name: 'deals',
     indexes: [

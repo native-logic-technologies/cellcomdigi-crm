@@ -47,6 +47,7 @@ export const connectionBuilder = DbConnection.builder()
         'SELECT * FROM tenant_member',
         'SELECT * FROM workflows',
         'SELECT * FROM workflow_executions',
+        'SELECT * FROM deal_stage_history',
       ]);
   })
   .onConnectError((_ctx, err) => {

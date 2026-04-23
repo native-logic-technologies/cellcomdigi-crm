@@ -15,6 +15,10 @@ export default {
   name: __t.string(),
   registrationNumber: __t.option(__t.string()),
   industry: __t.option(__t.string()),
+  phone: __t.option(__t.string()),
+  email: __t.option(__t.string()),
+  website: __t.option(__t.string()),
   address: __t.string(),
   billingAddress: __t.string(),
+  notes: __t.string(),
 };
