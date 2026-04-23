@@ -70,6 +70,7 @@ export const ContactSource = __t.enum("ContactSource", {
   Website: __t.unit(),
   Manual: __t.unit(),
   Pos: __t.unit(),
+  Referral: __t.unit(),
 });
 export type ContactSource = __Infer<typeof ContactSource>;
 

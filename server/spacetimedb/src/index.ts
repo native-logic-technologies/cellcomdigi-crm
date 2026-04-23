@@ -15,6 +15,7 @@
  */
 
 import { schema, table, t } from 'spacetimedb/server';
+import { Timestamp } from 'spacetimedb';
 
 // ---------------------------------------------------------------------------
 // Enums
@@ -23,7 +24,7 @@ import { schema, table, t } from 'spacetimedb/server';
 const userRole = t.enum('UserRole', ['Admin', 'Manager', 'Sales', 'Viewer']);
 
 const contactSource = t.enum('ContactSource', [
-  'Whatsapp', 'Tiktok', 'Email', 'Website', 'Manual', 'Pos',
+  'Whatsapp', 'Tiktok', 'Email', 'Website', 'Manual', 'Pos', 'Referral',
 ]);
 
 const contactStatus = t.enum('ContactStatus', [
@@ -1561,8 +1562,8 @@ export const seedDemoData = spacetimedb.reducer(
         id: 0n, tenant_id: TENANT_ID,
         invoice_number: inv.num,
         contact_id: contactIds[inv.contactIdx],
-        issue_date: issue.toISOString(),
-        due_date: due.toISOString(),
+        issue_date: Timestamp.fromDate(issue),
+        due_date: Timestamp.fromDate(due),
         subtotal: BigInt(Math.round(Number(inv.total) * 0.9)),
         tax_amount: BigInt(Math.round(Number(inv.total) * 0.1)),
         total: inv.total,
