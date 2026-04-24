@@ -63,6 +63,15 @@ export const ChannelType = __t.enum("ChannelType", {
 });
 export type ChannelType = __Infer<typeof ChannelType>;
 
+// The tagged union or sum type for the algebraic type `CollectionType`.
+export const CollectionType = __t.enum("CollectionType", {
+  AutoContact: __t.unit(),
+  AutoCompany: __t.unit(),
+  AutoDeal: __t.unit(),
+  Manual: __t.unit(),
+});
+export type CollectionType = __Infer<typeof CollectionType>;
+
 export const Companies = __t.object("Companies", {
   id: __t.u64(),
   tenantId: __t.u64(),
@@ -186,6 +195,22 @@ export const Deals = __t.object("Deals", {
 });
 export type Deals = __Infer<typeof Deals>;
 
+export const Documents = __t.object("Documents", {
+  id: __t.u64(),
+  tenantId: __t.u64(),
+  title: __t.string(),
+  sourceUrl: __t.option(__t.string()),
+  contentText: __t.string(),
+  fileType: __t.string(),
+  extractedSummary: __t.string(),
+  extractedKeywords: __t.string(),
+  metadata: __t.string(),
+  uploadedBy: __t.u64(),
+  createdAt: __t.timestamp(),
+  updatedAt: __t.timestamp(),
+});
+export type Documents = __Infer<typeof Documents>;
+
 // The tagged union or sum type for the algebraic type `EntityType`.
 export const EntityType = __t.enum("EntityType", {
   Contact: __t.unit(),
@@ -196,6 +221,18 @@ export const EntityType = __t.enum("EntityType", {
   Product: __t.unit(),
   User: __t.unit(),
   WorkflowRun: __t.unit(),
+  Payment: __t.unit(),
+  Activity: __t.unit(),
+  Conversation: __t.unit(),
+  Document: __t.unit(),
+  Memory: __t.unit(),
+  Container: __t.unit(),
+  ContentFragment: __t.unit(),
+  SocialPost: __t.unit(),
+  SocialCampaign: __t.unit(),
+  Workflow: __t.unit(),
+  PipelineStage: __t.unit(),
+  InvoiceItem: __t.unit(),
 });
 export type EntityType = __Infer<typeof EntityType>;
 
@@ -282,6 +319,47 @@ export const LhdnValidationStatus = __t.enum("LhdnValidationStatus", {
   Failed: __t.unit(),
 });
 export type LhdnValidationStatus = __Infer<typeof LhdnValidationStatus>;
+
+export const Memories = __t.object("Memories", {
+  id: __t.u64(),
+  tenantId: __t.u64(),
+  title: __t.string(),
+  content: __t.string(),
+  get memoryType() {
+    return MemoryType;
+  },
+  sourceTable: __t.option(__t.string()),
+  sourceId: __t.option(__t.u64()),
+  createdBy: __t.u64(),
+  createdAt: __t.timestamp(),
+  updatedAt: __t.timestamp(),
+});
+export type Memories = __Infer<typeof Memories>;
+
+export const MemoryCollections = __t.object("MemoryCollections", {
+  id: __t.u64(),
+  tenantId: __t.u64(),
+  name: __t.string(),
+  description: __t.string(),
+  get collectionType() {
+    return CollectionType;
+  },
+  sourceTable: __t.option(__t.string()),
+  sourceId: __t.option(__t.u64()),
+  createdAt: __t.timestamp(),
+  updatedAt: __t.timestamp(),
+});
+export type MemoryCollections = __Infer<typeof MemoryCollections>;
+
+// The tagged union or sum type for the algebraic type `MemoryType`.
+export const MemoryType = __t.enum("MemoryType", {
+  Note: __t.unit(),
+  Insight: __t.unit(),
+  Fact: __t.unit(),
+  Template: __t.unit(),
+  Summary: __t.unit(),
+});
+export type MemoryType = __Infer<typeof MemoryType>;
 
 // The tagged union or sum type for the algebraic type `MessageDirection`.
 export const MessageDirection = __t.enum("MessageDirection", {
@@ -415,6 +493,24 @@ export const RelationType = __t.enum("RelationType", {
   Triggered: __t.unit(),
   RelatedTo: __t.unit(),
   Paid: __t.unit(),
+  MentionedIn: __t.unit(),
+  HadActivity: __t.unit(),
+  ParticipatedIn: __t.unit(),
+  Sent: __t.unit(),
+  Received: __t.unit(),
+  Contains: __t.unit(),
+  PaidFor: __t.unit(),
+  About: __t.unit(),
+  ExtractedFrom: __t.unit(),
+  SimilarTo: __t.unit(),
+  AuthoredBy: __t.unit(),
+  AssignedTo: __t.unit(),
+  AtStage: __t.unit(),
+  InPipeline: __t.unit(),
+  PartOf: __t.unit(),
+  ContainedIn: __t.unit(),
+  HasMemory: __t.unit(),
+  HasDocument: __t.unit(),
 });
 export type RelationType = __Infer<typeof RelationType>;
 

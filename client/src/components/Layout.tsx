@@ -2,7 +2,7 @@ import {
   LayoutDashboard, Users, Building2, Banknote, Inbox,
   ShoppingCart, FileText, Network, Menu, X, Bell, Moon, Sun,
   Settings, LogOut, ChevronLeft, ChevronRight, Wand2, TrendingUp,
-  Share2
+  Share2, Brain
 } from 'lucide-react';
 import { useState } from 'react';
 import { useConnectionStatus } from '../spacetime/hooks';
@@ -11,7 +11,7 @@ import {
   Input, Tooltip, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem,
 } from '@nextui-org/react';
 
-type Page = 'dashboard' | 'contacts' | 'companies' | 'deals' | 'inbox' | 'products' | 'invoices' | 'graph' | 'automations' | 'analytics' | 'social';
+type Page = 'dashboard' | 'contacts' | 'companies' | 'deals' | 'inbox' | 'products' | 'invoices' | 'graph' | 'automations' | 'analytics' | 'social' | 'knowledgebase';
 
 interface NavSection {
   label: string;
@@ -43,6 +43,7 @@ const navSections: NavSection[] = [
     items: [
       { id: 'inbox', label: 'Inbox', icon: Inbox },
       { id: 'graph', label: 'Knowledge Graph', icon: Network },
+      { id: 'knowledgebase', label: 'Knowledge Base', icon: Brain },
     ],
   },
 ];
@@ -59,6 +60,7 @@ const pageTitles: Record<Page, { title: string; subtitle: string }> = {
   automations: { title: 'Automations', subtitle: 'AI-powered workflow automation' },
   analytics: { title: 'Analytics', subtitle: 'Pipeline performance and conversion metrics' },
   social: { title: 'Social Planner', subtitle: 'Plan, generate, and publish social content' },
+  knowledgebase: { title: 'Knowledge Base', subtitle: 'Documents, memories, and intelligence containers' },
 };
 
 export default function Layout({ page, setPage, children, user, onLogout }: {

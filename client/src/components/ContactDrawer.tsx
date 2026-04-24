@@ -1,8 +1,9 @@
 import { useMemo } from 'react';
 import {
   X, User, Phone, Mail, Building2, ClipboardList,
-  Receipt, MessageSquare,
+  Receipt, MessageSquare, Brain,
 } from 'lucide-react';
+import SupermemoryPanel from './SupermemoryPanel';
 import { useTable } from '../spacetime/hooks';
 import {
   Badge, Avatar, Card, CardBody, Tabs, Tab,
@@ -261,6 +262,20 @@ export default function ContactDrawer({ contact, onClose }: ContactDrawerProps) 
                     </Card>
                   ))
                 )}
+              </div>
+            </Tab>
+
+            <Tab key="supermemory" title={
+              <span className="flex items-center gap-1">
+                <Brain className="w-3.5 h-3.5" /> Supermemory
+              </span>
+            }>
+              <div className="px-6 py-4">
+                <SupermemoryPanel
+                  tenantId={contact.tenantId}
+                  entityTable="contacts"
+                  entityId={contact.id}
+                />
               </div>
             </Tab>
           </Tabs>

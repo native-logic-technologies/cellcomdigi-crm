@@ -14,6 +14,7 @@ import GraphView from './components/GraphView';
 import AutomationBuilder from './components/AutomationBuilder';
 import Analytics from './components/Analytics';
 import SocialPlanner from './components/SocialPlanner';
+import KnowledgeBase from './components/KnowledgeBase';
 
 function AppContent() {
   const [page, setPage] = useState<Page>('dashboard');
@@ -57,6 +58,7 @@ function AppContent() {
       {page === 'automations' && <AutomationBuilder />}
       {page === 'analytics' && <Analytics />}
       {page === 'social' && <SocialPlanner />}
+      {page === 'knowledgebase' && <KnowledgeBase />}
     </Layout>
   );
 }

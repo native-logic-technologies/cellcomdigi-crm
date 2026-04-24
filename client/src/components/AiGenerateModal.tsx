@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Wand2, Sparkles, Check, Calendar } from 'lucide-react';
+import { Wand2, Sparkles, Check, Calendar, Brain } from 'lucide-react';
 import { useTable } from '../spacetime/hooks';
+import { useSupermemory } from '../services/supermemory';
 import { generateSocialBatch, type GeneratedSocialPost } from '../services/socialAi';
 import {
   Button, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter,
@@ -18,6 +19,7 @@ export default function AiGenerateModal({ isOpen, onClose, onAccept }: AiGenerat
   const [products] = useTable('products');
   const [deals] = useTable('deals');
   const [contacts] = useTable('contacts');
+  const { buildCompanyContext } = useSupermemory(1n); // demo tenant
 
   const [theme, setTheme] = useState('');
   const [objective, setObjective] = useState('Awareness');
@@ -26,6 +28,7 @@ export default function AiGenerateModal({ isOpen, onClose, onAccept }: AiGenerat
   const [generating, setGenerating] = useState(false);
   const [generated, setGenerated] = useState<GeneratedSocialPost[]>([]);
   const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set());
+  const [lastGraphContext, setLastGraphContext] = useState('');
 
   const handleGenerate = async () => {
     if (!theme.trim()) return;
@@ -33,6 +36,16 @@ export default function AiGenerateModal({ isOpen, onClose, onAccept }: AiGenerat
     setGenerated([]);
     setSelectedIndices(new Set());
     try {
+      // Build supermemory context from first company (or generic)
+      let graphContext = '';
+      if (companies.length > 0) {
+        try {
+          const ctx = buildCompanyContext(companies[0].id, { includeMemories: true, includeDocuments: true });
+          graphContext = ctx.formatted;
+        } catch { /* ignore */ }
+      }
+      setLastGraphContext(graphContext);
+
       const result = await generateSocialBatch(
         theme,
         objective,
@@ -43,6 +56,7 @@ export default function AiGenerateModal({ isOpen, onClose, onAccept }: AiGenerat
           products: products.slice(0, 5),
           wonDeals: deals.filter((d: any) => d.status?.tag === 'Won').slice(0, 3),
           contacts: contacts.slice(0, 5),
+          graphContext,
         }
       );
       setGenerated(result.posts);
@@ -130,16 +144,23 @@ export default function AiGenerateModal({ isOpen, onClose, onAccept }: AiGenerat
             </div>
           </div>
 
-          <Button
-            color="primary"
-            className="bg-brand-600"
-            onPress={handleGenerate}
-            isLoading={generating}
-            startContent={!generating && <Sparkles className="w-4 h-4" />}
-            isDisabled={!theme.trim() || platforms.length === 0}
-          >
-            {generating ? 'Generating...' : 'Generate Posts'}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              color="primary"
+              className="bg-brand-600 flex-1"
+              onPress={handleGenerate}
+              isLoading={generating}
+              startContent={!generating && <Sparkles className="w-4 h-4" />}
+              isDisabled={!theme.trim() || platforms.length === 0}
+            >
+              {generating ? 'Generating...' : 'Generate Posts'}
+            </Button>
+            {lastGraphContext && (
+              <Badge variant="flat" size="sm" className="bg-brand-50 text-brand-700 border border-brand-200">
+                <Brain className="w-3 h-3 mr-1" /> Supermemory
+              </Badge>
+            )}
+          </div>
 
           {/* Results */}
           {generated.length > 0 && (

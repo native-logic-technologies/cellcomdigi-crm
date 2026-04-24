@@ -13,6 +13,18 @@ const ENTITY_COLORS: Record<string, string> = {
   Product: '#0ea5e9',
   User: '#6366f1',
   WorkflowRun: '#84cc16',
+  Payment: '#ec4899',
+  Activity: '#14b8a6',
+  Conversation: '#a855f7',
+  Document: '#3b82f6',
+  Memory: '#fbbf24',
+  Container: '#64748b',
+  ContentFragment: '#22d3ee',
+  SocialPost: '#e879f9',
+  SocialCampaign: '#fb923c',
+  Workflow: '#a3e635',
+  PipelineStage: '#38bdf8',
+  InvoiceItem: '#f87171',
 };
 
 const RELATION_COLORS: Record<string, string> = {
@@ -23,6 +35,24 @@ const RELATION_COLORS: Record<string, string> = {
   Triggered: '#8b5cf6',
   RelatedTo: '#64748b',
   Paid: '#f43f5e',
+  MentionedIn: '#a855f7',
+  HadActivity: '#14b8a6',
+  ParticipatedIn: '#22d3ee',
+  Sent: '#3b82f6',
+  Received: '#6366f1',
+  Contains: '#f59e0b',
+  PaidFor: '#ec4899',
+  About: '#fbbf24',
+  ExtractedFrom: '#f97316',
+  SimilarTo: '#94a3b8',
+  AuthoredBy: '#84cc16',
+  AssignedTo: '#0ea5e9',
+  AtStage: '#38bdf8',
+  InPipeline: '#22d3ee',
+  PartOf: '#e879f9',
+  ContainedIn: '#64748b',
+  HasMemory: '#fbbf24',
+  HasDocument: '#3b82f6',
 };
 
 export default function GraphView() {
@@ -93,7 +123,12 @@ export default function GraphView() {
       const id = `v-${v.id}`;
       const existing = cy.getElementById(id);
       const color = ENTITY_COLORS[v.entityType.tag] || '#94a3b8';
-      const label = `${v.entityType.tag}\n#${v.id}`;
+      let title = '';
+      try {
+        const props = JSON.parse(v.properties);
+        title = props.title || props.name || '';
+      } catch { /* ignore */ }
+      const label = title ? `${v.entityType.tag}\n${title.slice(0, 16)}` : `${v.entityType.tag}\n#${v.id}`;
       if (existing.length) {
         existing.data('color', color);
         existing.data('label', label);

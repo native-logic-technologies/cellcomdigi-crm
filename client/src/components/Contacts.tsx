@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Search, Pencil, Trash2, Eye } from 'lucide-react';
+import { Search, Pencil, Trash2, Eye, Upload } from 'lucide-react';
 import { useTable, useDb } from '../spacetime/hooks';
 import { useToast } from '../hooks/useToast';
 import PageHeader from './PageHeader';
 import ConfirmDialog from './ConfirmDialog';
 import ContactDrawer from './ContactDrawer';
+import CsvImportModal from './CsvImportModal';
 import {
   Button, Input, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter,
   Table, TableHeader, TableColumn, TableBody, TableRow, TableCell,
@@ -29,6 +30,7 @@ export default function Contacts() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<bigint | null>(null);
   const [drawerContact, setDrawerContact] = useState<any | null>(null);
+  const [csvImportOpen, setCsvImportOpen] = useState(false);
   const [form, setForm] = useState({
     name: '', email: '', phone: '', companyId: '', status: 'Lead', source: 'Manual',
   });
@@ -99,7 +101,21 @@ export default function Contacts() {
 
   return (
     <div className="space-y-5 max-w-7xl mx-auto animate-fade-in">
-      <PageHeader title="Contacts" subtitle="Manage your leads and customers" actionLabel="Add Contact" onAction={openCreate} />
+      <PageHeader
+        title="Contacts"
+        subtitle="Manage your leads and customers"
+        actionLabel="Add Contact"
+        onAction={openCreate}
+        secondaryAction={
+          <Button
+            variant="flat"
+            startContent={<Upload className="w-4 h-4" />}
+            onPress={() => setCsvImportOpen(true)}
+          >
+            Import CSV
+          </Button>
+        }
+      />
 
       <Card className="border border-slate-100 shadow-sm">
         <CardBody className="flex flex-row flex-wrap gap-3 py-4">
@@ -219,6 +235,8 @@ export default function Contacts() {
       />
 
       {drawerContact && <ContactDrawer contact={drawerContact} onClose={() => setDrawerContact(null)} />}
+
+      <CsvImportModal isOpen={csvImportOpen} onClose={() => setCsvImportOpen(false)} />
     </div>
   );
 }

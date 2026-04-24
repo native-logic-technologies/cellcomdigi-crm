@@ -50,6 +50,9 @@ export const connectionBuilder = DbConnection.builder()
         'SELECT * FROM deal_stage_history',
         'SELECT * FROM social_campaigns',
         'SELECT * FROM social_posts',
+        'SELECT * FROM documents',
+        'SELECT * FROM memories',
+        'SELECT * FROM memory_collections',
       ]);
   })
   .onConnectError((_ctx, err) => {

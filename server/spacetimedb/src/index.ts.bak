@@ -75,49 +75,11 @@ const paymentStatus = t.enum('PaymentStatus', [
 const entityType = t.enum('EntityType', [
   'Contact', 'Company', 'Deal', 'Message',
   'Invoice', 'Product', 'User', 'WorkflowRun',
-  'Payment',
-  'Activity',
-  'Conversation',
-  'Document',
-  'Memory',
-  'Container',
-  'ContentFragment',
-  'SocialPost',
-  'SocialCampaign',
-  'Workflow',
-  'PipelineStage',
-  'InvoiceItem',
 ]);
 
 const relationType = t.enum('RelationType', [
   'BelongsTo', 'CommunicatedWith', 'Purchased',
   'WorksAt', 'Triggered', 'RelatedTo', 'Paid',
-  'MentionedIn',
-  'HadActivity',
-  'ParticipatedIn',
-  'Sent',
-  'Received',
-  'Contains',
-  'PaidFor',
-  'About',
-  'ExtractedFrom',
-  'SimilarTo',
-  'AuthoredBy',
-  'AssignedTo',
-  'AtStage',
-  'InPipeline',
-  'PartOf',
-  'ContainedIn',
-  'HasMemory',
-  'HasDocument',
-]);
-
-const memoryType = t.enum('MemoryType', [
-  'Note', 'Insight', 'Fact', 'Template', 'Summary',
-]);
-
-const collectionType = t.enum('CollectionType', [
-  'AutoContact', 'AutoCompany', 'AutoDeal', 'Manual',
 ]);
 
 const socialPostPlatform = t.enum('SocialPostPlatform', [
@@ -400,59 +362,6 @@ const payments = table(
 );
 
 // ---------------------------------------------------------------------------
-// Document & Memory Tables
-// ---------------------------------------------------------------------------
-
-const documents = table(
-  { name: 'documents', public: true },
-  {
-    id: t.u64().primaryKey().autoInc(),
-    tenant_id: t.u64().index('btree'),
-    title: t.string(),
-    source_url: t.option(t.string()),
-    content_text: t.string(),
-    file_type: t.string(),
-    extracted_summary: t.string(),
-    extracted_keywords: t.string(),
-    metadata: t.string(),
-    uploaded_by: t.u64(),
-    created_at: t.timestamp(),
-    updated_at: t.timestamp(),
-  }
-);
-
-const memories = table(
-  { name: 'memories', public: true },
-  {
-    id: t.u64().primaryKey().autoInc(),
-    tenant_id: t.u64().index('btree'),
-    title: t.string(),
-    content: t.string(),
-    memory_type: memoryType,
-    source_table: t.option(t.string()),
-    source_id: t.option(t.u64()),
-    created_by: t.u64(),
-    created_at: t.timestamp(),
-    updated_at: t.timestamp(),
-  }
-);
-
-const memoryCollections = table(
-  { name: 'memory_collections', public: true },
-  {
-    id: t.u64().primaryKey().autoInc(),
-    tenant_id: t.u64().index('btree'),
-    name: t.string(),
-    description: t.string(),
-    collection_type: collectionType,
-    source_table: t.option(t.string()),
-    source_id: t.option(t.u64()),
-    created_at: t.timestamp(),
-    updated_at: t.timestamp(),
-  }
-);
-
-// ---------------------------------------------------------------------------
 // Knowledge Graph Tables
 // ---------------------------------------------------------------------------
 
@@ -609,9 +518,6 @@ const spacetimedb = schema({
   invoices,
   invoice_items: invoiceItems,
   payments,
-  documents,
-  memories,
-  memory_collections: memoryCollections,
   kg_vertex: kgVertex,
   kg_edge: kgEdge,
   tenant_member: tenantMember,
@@ -644,13 +550,7 @@ function syncKgVertex(
   sourceId: bigint,
   properties: any
 ): void {
-  let existing: any;
-  for (const v of ctx.db.kg_vertex.iter()) {
-    if (v.tenant_id === tenantId && v.source_table === sourceTable && v.source_id === sourceId) {
-      existing = v;
-      break;
-    }
-  }
+  const existing = ctx.db.kg_vertex.tenant_source.find([tenantId, sourceTable, sourceId]);
   if (existing) {
     ctx.db.kg_vertex.id.update({
       ...existing,
@@ -717,117 +617,6 @@ function findKgVertexId(ctx: any, tenantId: bigint, sourceTable: string, sourceI
     }
   }
   return undefined;
-}
-
-function deleteKgEdgesForVertex(ctx: any, vertexId: bigint): void {
-  const edgesToDelete = [];
-  for (const e of ctx.db.kg_edge.iter()) {
-    if (e.source_vertex_id === vertexId || e.target_vertex_id === vertexId) {
-      edgesToDelete.push(e.id);
-    }
-  }
-  for (const edgeId of edgesToDelete) {
-    ctx.db.kg_edge.id.delete(edgeId);
-  }
-}
-
-function deleteEdgesByRelation(
-  ctx: any,
-  sourceVertexId: bigint,
-  targetVertexId: bigint,
-  relationTypeTag: string
-): void {
-  for (const e of ctx.db.kg_edge.iter()) {
-    if (
-      e.source_vertex_id === sourceVertexId &&
-      e.target_vertex_id === targetVertexId &&
-      e.relation_type.tag === relationTypeTag
-    ) {
-      ctx.db.kg_edge.id.delete(e.id);
-    }
-  }
-}
-
-function syncKgEdge(
-  ctx: any,
-  tenantId: bigint,
-  sourceVertexId: bigint,
-  targetVertexId: bigint,
-  relationType: any,
-  properties?: any,
-  weight?: number
-): void {
-  for (const e of ctx.db.kg_edge.iter()) {
-    if (
-      e.tenant_id === tenantId &&
-      e.source_vertex_id === sourceVertexId &&
-      e.target_vertex_id === targetVertexId &&
-      e.relation_type.tag === relationType.tag
-    ) {
-      ctx.db.kg_edge.id.update({
-        ...e,
-        properties: JSON.stringify(properties ?? {}),
-        weight: weight ?? e.weight,
-      });
-      return;
-    }
-  }
-  ctx.db.kg_edge.insert({
-    id: 0n,
-    tenant_id: tenantId,
-    source_vertex_id: sourceVertexId,
-    target_vertex_id: targetVertexId,
-    relation_type: relationType,
-    properties: JSON.stringify(properties ?? {}),
-    weight: weight ?? undefined,
-    created_at: ctx.timestamp,
-  });
-}
-
-function ensureAutoContainer(
-  ctx: any,
-  tenantId: bigint,
-  collectionType: any,
-  sourceTable: string,
-  sourceId: bigint,
-  name: string,
-  description: string
-): bigint {
-  const existingVertex = findKgVertexId(ctx, tenantId, 'memory_collections', sourceId);
-  if (existingVertex) {
-    return existingVertex;
-  }
-  const collection = ctx.db.memory_collections.insert({
-    id: 0n,
-    tenant_id: tenantId,
-    name,
-    description,
-    collection_type: collectionType,
-    source_table: sourceTable,
-    source_id: sourceId,
-    created_at: ctx.timestamp,
-    updated_at: ctx.timestamp,
-  });
-  syncKgVertex(ctx, tenantId, { tag: 'Container' }, 'memory_collections', collection.id, {
-    title: name,
-    summary: `Auto-generated container for ${sourceTable} #${sourceId}`,
-    keywords: [],
-    topics: [],
-    sentiment: 0,
-    language: 'en',
-    importance: 0.5,
-    raw: { name, description, collection_type: collectionType.tag },
-    extracted_facts: [],
-    content_text: description,
-  });
-  const containerVertexId = findKgVertexId(ctx, tenantId, 'memory_collections', collection.id);
-  if (containerVertexId) {
-    const entityVertexId = findKgVertexId(ctx, tenantId, sourceTable, sourceId);
-    if (entityVertexId) {
-      syncKgEdge(ctx, tenantId, entityVertexId, containerVertexId, { tag: 'ContainedIn' });
-    }
-  }
-  return containerVertexId ?? 0n;
 }
 
 // ---------------------------------------------------------------------------
@@ -937,8 +726,6 @@ export const createContact = spacetimedb.reducer(
         createKgEdge(ctx, tenant_id, contactVertexId, companyVertexId, { tag: 'WorksAt' });
       }
     }
-
-    ensureAutoContainer(ctx, tenant_id, { tag: 'AutoContact' }, 'contacts', contact.id, `${name} — Intelligence`, `Auto-generated intelligence container for contact ${name}`);
   }
 );
 
@@ -969,31 +756,6 @@ export const updateContact = spacetimedb.reducer(
       updated_at: ctx.timestamp,
     });
     syncKgVertex(ctx, contact.tenant_id, { tag: 'Contact' }, 'contacts', id, { email, phone, name, status: status.tag });
-
-    const contactVertexId = findKgVertexId(ctx, contact.tenant_id, 'contacts', id);
-    if (contactVertexId) {
-      // Delete old WorksAt edge if company changed
-      if (contact.company_id !== undefined && contact.company_id !== company_id) {
-        const oldCompanyVertexId = findKgVertexId(ctx, contact.tenant_id, 'companies', contact.company_id);
-        if (oldCompanyVertexId) {
-          deleteEdgesByRelation(ctx, contactVertexId, oldCompanyVertexId, 'WorksAt');
-        }
-      }
-      // Create new WorksAt edge
-      if (company_id !== undefined) {
-        const companyVertexId = findKgVertexId(ctx, contact.tenant_id, 'companies', company_id);
-        if (companyVertexId) {
-          syncKgEdge(ctx, contact.tenant_id, contactVertexId, companyVertexId, { tag: 'WorksAt' });
-        }
-      }
-      // AssignedTo edge
-      if (assigned_to !== undefined) {
-        const userVertexId = findKgVertexId(ctx, contact.tenant_id, 'users', assigned_to);
-        if (userVertexId) {
-          syncKgEdge(ctx, contact.tenant_id, contactVertexId, userVertexId, { tag: 'AssignedTo' });
-        }
-      }
-    }
   }
 );
 
@@ -1005,132 +767,6 @@ export const deleteContact = spacetimedb.reducer(
     requireTenant(ctx, contact.tenant_id);
     deleteKgVertex(ctx, 'contacts', id);
     ctx.db.contacts.id.delete(id);
-  }
-);
-
-// ---------------------------------------------------------------------------
-// Bulk import contacts from CSV
-// ---------------------------------------------------------------------------
-
-export const bulkImportContacts = spacetimedb.reducer(
-  {
-    tenant_id: t.u64(),
-    contacts_json: t.string(),
-  },
-  (ctx: any, { tenant_id, contacts_json }) => {
-    requireTenant(ctx, tenant_id);
-
-    interface CsvContactRow {
-      name: string;
-      email: string;
-      phone?: string;
-      company_name?: string;
-      source?: string;
-      status?: string;
-      assigned_to_name?: string;
-    }
-
-    let rows: CsvContactRow[];
-    try {
-      rows = JSON.parse(contacts_json);
-    } catch (_e) {
-      throw new Error('Invalid JSON in contacts_json');
-    }
-    if (!Array.isArray(rows)) throw new Error('contacts_json must be an array');
-
-    // Build lookup maps for company/user names
-    const companyMap = new Map<string, bigint>();
-    for (const c of ctx.db.companies.iter()) {
-      if (c.tenant_id === tenant_id) {
-        companyMap.set(c.name.toLowerCase(), c.id);
-      }
-    }
-
-    const userMap = new Map<string, bigint>();
-    for (const u of ctx.db.users.iter()) {
-      if (u.tenant_id === tenant_id) {
-        userMap.set(u.name.toLowerCase(), u.id);
-      }
-    }
-
-    // Valid enum values (lowercased for matching)
-    const validSources = new Set(['whatsapp', 'tiktok', 'email', 'website', 'manual', 'pos', 'referral']);
-    const validStatuses = new Set(['lead', 'prospect', 'customer', 'churned']);
-
-    let imported = 0;
-    let skipped = 0;
-
-    for (const row of rows) {
-      if (!row.name || !row.email) {
-        skipped++;
-        continue;
-      }
-
-      // Resolve company by name
-      let company_id: bigint | undefined;
-      if (row.company_name) {
-        const cid = companyMap.get(row.company_name.toLowerCase());
-        if (cid !== undefined) company_id = cid;
-      }
-
-      // Resolve assigned user by name
-      let assigned_to: bigint | undefined;
-      if (row.assigned_to_name) {
-        const uid = userMap.get(row.assigned_to_name.toLowerCase());
-        if (uid !== undefined) assigned_to = uid;
-      }
-
-      // Normalize source
-      const sourceRaw = (row.source ?? 'Manual').toLowerCase().trim();
-      let sourceTag = 'Manual';
-      if (validSources.has(sourceRaw)) {
-        sourceTag = sourceRaw.charAt(0).toUpperCase() + sourceRaw.slice(1);
-      }
-
-      // Normalize status
-      const statusRaw = (row.status ?? 'Lead').toLowerCase().trim();
-      let statusTag = 'Lead';
-      if (validStatuses.has(statusRaw)) {
-        statusTag = statusRaw.charAt(0).toUpperCase() + statusRaw.slice(1);
-      }
-
-      const contact = ctx.db.contacts.insert({
-        id: 0n,
-        tenant_id,
-        email: row.email.trim(),
-        phone: (row.phone ?? '').trim(),
-        name: row.name.trim(),
-        company_id: company_id !== undefined ? { tag: 'some', value: company_id } as any : undefined,
-        source: { tag: sourceTag } as any,
-        status: { tag: statusTag } as any,
-        assigned_to: assigned_to !== undefined ? { tag: 'some', value: assigned_to } as any : undefined,
-        custom_fields: '{}',
-        created_at: ctx.timestamp,
-        updated_at: ctx.timestamp,
-      });
-      imported++;
-
-      syncKgVertex(ctx, tenant_id, { tag: 'Contact' }, 'contacts', contact.id, {
-        email: row.email.trim(),
-        phone: (row.phone ?? '').trim(),
-        name: row.name.trim(),
-        status: statusTag,
-      });
-
-      if (company_id !== undefined) {
-        const companyVertexId = findKgVertexId(ctx, tenant_id, 'companies', company_id);
-        const contactVertexId = findKgVertexId(ctx, tenant_id, 'contacts', contact.id);
-        if (companyVertexId && contactVertexId) {
-          createKgEdge(ctx, tenant_id, contactVertexId, companyVertexId, { tag: 'WorksAt' });
-        }
-      }
-
-      ensureAutoContainer(ctx, tenant_id, { tag: 'AutoContact' }, 'contacts', contact.id, `${row.name.trim()} — Intelligence`, `Auto-generated intelligence container for contact ${row.name.trim()}`);
-    }
-
-    if (imported === 0) {
-      throw new Error(`No valid contacts to import. ${skipped} rows skipped (missing name or email).`);
-    }
   }
 );
 
@@ -1169,8 +805,6 @@ export const createCompany = spacetimedb.reducer(
       updated_at: ctx.timestamp,
     });
     syncKgVertex(ctx, tenant_id, { tag: 'Company' }, 'companies', company.id, { name, registration_number, industry, email, phone });
-
-    ensureAutoContainer(ctx, tenant_id, { tag: 'AutoCompany' }, 'companies', company.id, `${name} — Account`, `Auto-generated account container for ${name}`);
   }
 );
 
@@ -1273,7 +907,7 @@ export const createPipelineStage = spacetimedb.reducer(
   },
   (ctx: any, { tenant_id, pipeline_id, name, order_index, win_probability }) => {
     requireTenant(ctx, tenant_id);
-    const stage = ctx.db.pipeline_stages.insert({
+    ctx.db.pipeline_stages.insert({
       id: 0n,
       tenant_id,
       pipeline_id,
@@ -1283,12 +917,6 @@ export const createPipelineStage = spacetimedb.reducer(
       created_at: ctx.timestamp,
       updated_at: ctx.timestamp,
     });
-    syncKgVertex(ctx, tenant_id, { tag: 'PipelineStage' }, 'pipeline_stages', stage.id, { name, order_index, win_probability });
-    const stageVertexId = findKgVertexId(ctx, tenant_id, 'pipeline_stages', stage.id);
-    const pipelineVertexId = findKgVertexId(ctx, tenant_id, 'pipelines', pipeline_id);
-    if (stageVertexId && pipelineVertexId) {
-      syncKgEdge(ctx, tenant_id, stageVertexId, pipelineVertexId, { tag: 'InPipeline' });
-    }
   }
 );
 
@@ -1388,8 +1016,6 @@ export const createDeal = spacetimedb.reducer(
         createKgEdge(ctx, tenant_id, dealVertexId, companyVertexId, { tag: 'RelatedTo' });
       }
     }
-
-    ensureAutoContainer(ctx, tenant_id, { tag: 'AutoDeal' }, 'deals', deal.id, `${name} — Deal`, `Auto-generated deal container for ${name}`);
   }
 );
 
@@ -1424,36 +1050,6 @@ export const updateDeal = spacetimedb.reducer(
       updated_at: ctx.timestamp,
     });
     syncKgVertex(ctx, deal.tenant_id, { tag: 'Deal' }, 'deals', id, { name, value, currency, probability });
-
-    const dealVertexId = findKgVertexId(ctx, deal.tenant_id, 'deals', id);
-    if (dealVertexId) {
-      // Delete old BelongsTo edge if contact changed
-      if (deal.contact_id !== contact_id) {
-        const oldContactVertexId = findKgVertexId(ctx, deal.tenant_id, 'contacts', deal.contact_id);
-        if (oldContactVertexId) {
-          deleteEdgesByRelation(ctx, dealVertexId, oldContactVertexId, 'BelongsTo');
-        }
-      }
-      // Create new BelongsTo edge
-      const contactVertexId = findKgVertexId(ctx, deal.tenant_id, 'contacts', contact_id);
-      if (contactVertexId) {
-        syncKgEdge(ctx, deal.tenant_id, dealVertexId, contactVertexId, { tag: 'BelongsTo' });
-      }
-      // Delete old RelatedTo edge if company changed
-      if (deal.company_id !== undefined && deal.company_id !== company_id) {
-        const oldCompanyVertexId = findKgVertexId(ctx, deal.tenant_id, 'companies', deal.company_id);
-        if (oldCompanyVertexId) {
-          deleteEdgesByRelation(ctx, dealVertexId, oldCompanyVertexId, 'RelatedTo');
-        }
-      }
-      // Create new RelatedTo edge
-      if (company_id !== undefined) {
-        const companyVertexId = findKgVertexId(ctx, deal.tenant_id, 'companies', company_id);
-        if (companyVertexId) {
-          syncKgEdge(ctx, deal.tenant_id, dealVertexId, companyVertexId, { tag: 'RelatedTo' });
-        }
-      }
-    }
   }
 );
 
@@ -1475,20 +1071,6 @@ export const moveDealStage = spacetimedb.reducer(
       moved_by: undefined,
       moved_at: ctx.timestamp,
     });
-
-    syncKgVertex(ctx, deal.tenant_id, { tag: 'Deal' }, 'deals', id, { name: deal.name, value: deal.value, currency: deal.currency, probability: stage.win_probability, status: deal.status.tag });
-    // Update AtStage edge
-    const dealVertexId = findKgVertexId(ctx, deal.tenant_id, 'deals', id);
-    const newStageVertexId = findKgVertexId(ctx, deal.tenant_id, 'pipeline_stages', stage_id);
-    if (dealVertexId && newStageVertexId) {
-      // Delete old AtStage edges
-      for (const e of ctx.db.kg_edge.iter()) {
-        if (e.source_vertex_id === dealVertexId && e.relation_type.tag === 'AtStage') {
-          ctx.db.kg_edge.id.delete(e.id);
-        }
-      }
-      syncKgEdge(ctx, deal.tenant_id, dealVertexId, newStageVertexId, { tag: 'AtStage' }, { moved_at: ctx.timestamp.toISOString() });
-    }
   }
 );
 
@@ -1538,7 +1120,7 @@ export const createActivity = spacetimedb.reducer(
   },
   (ctx: any, { tenant_id, contact_id, deal_id, type, description, created_by }) => {
     requireTenant(ctx, tenant_id);
-    const activity = ctx.db.activities.insert({
+    ctx.db.activities.insert({
       id: 0n,
       tenant_id,
       contact_id,
@@ -1548,21 +1130,6 @@ export const createActivity = spacetimedb.reducer(
       created_by,
       created_at: ctx.timestamp,
     });
-    syncKgVertex(ctx, tenant_id, { tag: 'Activity' }, 'activities', activity.id, { type: type.tag, description, summary: description.slice(0, 120) });
-    const activityVertexId = findKgVertexId(ctx, tenant_id, 'activities', activity.id);
-    if (contact_id !== undefined && activityVertexId) {
-      const contactVertexId = findKgVertexId(ctx, tenant_id, 'contacts', contact_id);
-      if (contactVertexId) {
-        syncKgEdge(ctx, tenant_id, contactVertexId, activityVertexId, { tag: 'HadActivity' });
-        syncKgEdge(ctx, tenant_id, activityVertexId, contactVertexId, { tag: 'About' });
-      }
-    }
-    if (deal_id !== undefined && activityVertexId) {
-      const dealVertexId = findKgVertexId(ctx, tenant_id, 'deals', deal_id);
-      if (dealVertexId) {
-        syncKgEdge(ctx, tenant_id, activityVertexId, dealVertexId, { tag: 'About' });
-      }
-    }
   }
 );
 
@@ -1589,7 +1156,7 @@ export const createConversation = spacetimedb.reducer(
   },
   (ctx: any, { tenant_id, contact_id, channel, channel_conversation_id }) => {
     requireTenant(ctx, tenant_id);
-    const conversation = ctx.db.conversations.insert({
+    ctx.db.conversations.insert({
       id: 0n,
       tenant_id,
       contact_id,
@@ -1599,14 +1166,6 @@ export const createConversation = spacetimedb.reducer(
       last_message_at: ctx.timestamp,
       unread_count: 0,
     });
-    syncKgVertex(ctx, tenant_id, { tag: 'Conversation' }, 'conversations', conversation.id, { channel: channel.tag, status: 'Active', unread_count: 0 });
-    const convVertexId = findKgVertexId(ctx, tenant_id, 'conversations', conversation.id);
-    if (convVertexId) {
-      const contactVertexId = findKgVertexId(ctx, tenant_id, 'contacts', contact_id);
-      if (contactVertexId) {
-        syncKgEdge(ctx, tenant_id, contactVertexId, convVertexId, { tag: 'ParticipatedIn' });
-      }
-    }
   }
 );
 
@@ -1657,27 +1216,6 @@ export const sendMessage = spacetimedb.reducer(
     });
 
     syncKgVertex(ctx, tenant_id, { tag: 'Message' }, 'messages', message.id, { body: body.slice(0, 200), direction: direction.tag });
-
-    const messageVertexId = findKgVertexId(ctx, tenant_id, 'messages', message.id);
-    const convVertexId = findKgVertexId(ctx, tenant_id, 'conversations', conversation_id);
-    if (messageVertexId && convVertexId) {
-      syncKgEdge(ctx, tenant_id, messageVertexId, convVertexId, { tag: 'PartOf' });
-    }
-    // Sent/Received edges
-    if (messageVertexId) {
-      if (direction.tag === 'Outbound') {
-        const senderVertexId = findKgVertexId(ctx, tenant_id, 'users', sender_id);
-        if (senderVertexId) {
-          syncKgEdge(ctx, tenant_id, senderVertexId, messageVertexId, { tag: 'Sent' });
-        }
-      } else {
-        const contactVertexId = findKgVertexId(ctx, tenant_id, 'contacts', conv.contact_id);
-        if (contactVertexId) {
-          syncKgEdge(ctx, tenant_id, contactVertexId, messageVertexId, { tag: 'Sent' });
-          syncKgEdge(ctx, tenant_id, messageVertexId, contactVertexId, { tag: 'Received' });
-        }
-      }
-    }
   }
 );
 
@@ -1810,18 +1348,6 @@ export const createInvoice = spacetimedb.reducer(
       updated_at: ctx.timestamp,
     });
     syncKgVertex(ctx, tenant_id, { tag: 'Invoice' }, 'invoices', invoice.id, { invoice_number, total, currency, status: 'Draft' });
-
-    const invoiceVertexId = findKgVertexId(ctx, tenant_id, 'invoices', invoice.id);
-    const contactVertexId = findKgVertexId(ctx, tenant_id, 'contacts', contact_id);
-    if (invoiceVertexId && contactVertexId) {
-      syncKgEdge(ctx, tenant_id, invoiceVertexId, contactVertexId, { tag: 'BelongsTo' });
-    }
-    if (company_id !== undefined && invoiceVertexId) {
-      const companyVertexId = findKgVertexId(ctx, tenant_id, 'companies', company_id);
-      if (companyVertexId) {
-        syncKgEdge(ctx, tenant_id, invoiceVertexId, companyVertexId, { tag: 'RelatedTo' });
-      }
-    }
   }
 );
 
@@ -1886,7 +1412,7 @@ export const addInvoiceItem = spacetimedb.reducer(
   },
   (ctx: any, { tenant_id, invoice_id, product_id, description, quantity, unit_price, total }) => {
     requireTenant(ctx, tenant_id);
-    const item = ctx.db.invoice_items.insert({
+    ctx.db.invoice_items.insert({
       id: 0n,
       tenant_id,
       invoice_id,
@@ -1896,18 +1422,6 @@ export const addInvoiceItem = spacetimedb.reducer(
       unit_price,
       total,
     });
-    syncKgVertex(ctx, tenant_id, { tag: 'InvoiceItem' }, 'invoice_items', item.id, { description, quantity, total });
-    const itemVertexId = findKgVertexId(ctx, tenant_id, 'invoice_items', item.id);
-    const invoiceVertexId = findKgVertexId(ctx, tenant_id, 'invoices', invoice_id);
-    if (itemVertexId && invoiceVertexId) {
-      syncKgEdge(ctx, tenant_id, itemVertexId, invoiceVertexId, { tag: 'PartOf' });
-    }
-    if (product_id !== undefined && itemVertexId) {
-      const productVertexId = findKgVertexId(ctx, tenant_id, 'products', product_id);
-      if (productVertexId) {
-        syncKgEdge(ctx, tenant_id, itemVertexId, productVertexId, { tag: 'RelatedTo' });
-      }
-    }
   }
 );
 
@@ -1958,18 +1472,6 @@ export const recordPayment = spacetimedb.reducer(
     }
 
     syncKgVertex(ctx, tenant_id, { tag: 'Payment' }, 'payments', payment.id, { amount, currency, method: method.tag, status: 'Completed' });
-
-    const paymentVertexId = findKgVertexId(ctx, tenant_id, 'payments', payment.id);
-    const contactVertexId = findKgVertexId(ctx, tenant_id, 'contacts', contact_id);
-    if (paymentVertexId && contactVertexId) {
-      syncKgEdge(ctx, tenant_id, paymentVertexId, contactVertexId, { tag: 'Paid' });
-    }
-    if (invoice_id !== undefined && paymentVertexId) {
-      const invoiceVertexId = findKgVertexId(ctx, tenant_id, 'invoices', invoice_id);
-      if (invoiceVertexId) {
-        syncKgEdge(ctx, tenant_id, paymentVertexId, invoiceVertexId, { tag: 'PaidFor' });
-      }
-    }
   }
 );
 
@@ -2260,14 +1762,13 @@ export const createWorkflow = spacetimedb.reducer(
     steps: t.string(),
   },
   (ctx: any, { tenant_id, name, description, trigger_type, trigger_config, steps }) => {
-    const workflow = ctx.db.workflows.insert({
+    ctx.db.workflows.insert({
       id: 0n, tenant_id, name, description,
       trigger_type, trigger_config, steps,
       status: 'draft',
       created_at: ctx.timestamp,
       updated_at: ctx.timestamp,
     });
-    syncKgVertex(ctx, tenant_id, { tag: 'Workflow' }, 'workflows', workflow.id, { name, trigger_type, status: 'draft' });
   }
 );
 
@@ -2327,14 +1828,13 @@ export const createSocialCampaign = spacetimedb.reducer(
   },
   (ctx: any, { tenant_id, name, theme, objective, platforms, start_date, end_date }) => {
     requireTenant(ctx, tenant_id);
-    const campaign = ctx.db.social_campaigns.insert({
+    ctx.db.social_campaigns.insert({
       id: 0n, tenant_id, name, theme, objective, platforms,
       start_date, end_date,
       status: { tag: 'Draft' },
       created_at: ctx.timestamp,
       updated_at: ctx.timestamp,
     });
-    syncKgVertex(ctx, tenant_id, { tag: 'SocialCampaign' }, 'social_campaigns', campaign.id, { name, theme, objective: objective.tag, platforms: JSON.parse(platforms) });
   }
 );
 
@@ -2388,7 +1888,7 @@ export const createSocialPost = spacetimedb.reducer(
   },
   (ctx: any, { tenant_id, campaign_id, platform, content, image_url, hashtags, scheduled_at, target_audience, metadata }) => {
     requireTenant(ctx, tenant_id);
-    const post = ctx.db.social_posts.insert({
+    ctx.db.social_posts.insert({
       id: 0n, tenant_id, campaign_id, platform, content,
       image_url, hashtags, scheduled_at,
       published_at: undefined,
@@ -2398,14 +1898,6 @@ export const createSocialPost = spacetimedb.reducer(
       created_at: ctx.timestamp,
       updated_at: ctx.timestamp,
     });
-    syncKgVertex(ctx, tenant_id, { tag: 'SocialPost' }, 'social_posts', post.id, { platform: platform.tag, content: content.slice(0, 200), hashtags: JSON.parse(hashtags), status: 'Draft' });
-    const postVertexId = findKgVertexId(ctx, tenant_id, 'social_posts', post.id);
-    if (campaign_id !== undefined && postVertexId) {
-      const campaignVertexId = findKgVertexId(ctx, tenant_id, 'social_campaigns', campaign_id);
-      if (campaignVertexId) {
-        syncKgEdge(ctx, tenant_id, postVertexId, campaignVertexId, { tag: 'PartOf' });
-      }
-    }
   }
 );
 
@@ -2471,13 +1963,7 @@ export const broadcastWhatsApp = spacetimedb.reducer(
     const ids: bigint[] = JSON.parse(contact_ids);
     for (const contactId of ids) {
       // Find or create WhatsApp conversation
-      let conv: any;
-      for (const c of ctx.db.conversations.iter()) {
-        if (c.tenant_id === post.tenant_id && c.contact_id === contactId) {
-          conv = c;
-          break;
-        }
-      }
+      let conv = ctx.db.conversations.tenant_contact.find([post.tenant_id, contactId]);
       if (!conv || conv.channel.tag !== 'Whatsapp') {
         // Create a new WhatsApp conversation
         const newConv = ctx.db.conversations.insert({
@@ -2525,352 +2011,5 @@ export const broadcastWhatsApp = spacetimedb.reducer(
       published_at: ctx.timestamp,
       updated_at: ctx.timestamp,
     });
-  }
-);
-
-
-// ---------------------------------------------------------------------------
-// Document reducers
-// ---------------------------------------------------------------------------
-
-export const createDocument = spacetimedb.reducer(
-  {
-    tenant_id: t.u64(),
-    title: t.string(),
-    source_url: t.option(t.string()),
-    content_text: t.string(),
-    file_type: t.string(),
-    extracted_summary: t.string(),
-    extracted_keywords: t.string(),
-    metadata: t.string(),
-    uploaded_by: t.u64(),
-    target_entity_table: t.option(t.string()),
-    target_entity_id: t.option(t.u64()),
-  },
-  (ctx, args) => {
-    requireTenant(ctx, args.tenant_id);
-    const doc = ctx.db.documents.insert({
-      id: 0n,
-      tenant_id: args.tenant_id,
-      title: args.title,
-      source_url: args.source_url,
-      content_text: args.content_text,
-      file_type: args.file_type,
-      extracted_summary: args.extracted_summary,
-      extracted_keywords: args.extracted_keywords,
-      metadata: args.metadata,
-      uploaded_by: args.uploaded_by,
-      created_at: ctx.timestamp,
-      updated_at: ctx.timestamp,
-    });
-    syncKgVertex(ctx, args.tenant_id, { tag: 'Document' }, 'documents', doc.id, {
-      title: args.title,
-      summary: args.extracted_summary,
-      keywords: JSON.parse(args.extracted_keywords),
-      file_type: args.file_type,
-      content_text: args.content_text.slice(0, 500),
-    });
-    const docVertexId = findKgVertexId(ctx, args.tenant_id, 'documents', doc.id);
-    if (docVertexId && args.target_entity_table !== undefined && args.target_entity_id !== undefined) {
-      const targetVertexId = findKgVertexId(ctx, args.tenant_id, args.target_entity_table, args.target_entity_id);
-      if (targetVertexId) {
-        syncKgEdge(ctx, args.tenant_id, docVertexId, targetVertexId, { tag: 'About' });
-        syncKgEdge(ctx, args.tenant_id, targetVertexId, docVertexId, { tag: 'HasDocument' });
-        // Link to container
-        const containerVertexId = findKgVertexId(ctx, args.tenant_id, 'memory_collections', args.target_entity_id);
-        if (containerVertexId) {
-          syncKgEdge(ctx, args.tenant_id, docVertexId, containerVertexId, { tag: 'ContainedIn' });
-        }
-      }
-    }
-  }
-);
-
-export const updateDocument = spacetimedb.reducer(
-  {
-    id: t.u64(),
-    title: t.string(),
-    extracted_summary: t.string(),
-    extracted_keywords: t.string(),
-    metadata: t.string(),
-  },
-  (ctx, { id, title, extracted_summary, extracted_keywords, metadata }) => {
-    const doc = ctx.db.documents.id.find(id);
-    if (!doc) throw new Error('Document not found');
-    requireTenant(ctx, doc.tenant_id);
-    ctx.db.documents.id.update({ ...doc, title, extracted_summary, extracted_keywords, metadata, updated_at: ctx.timestamp });
-    syncKgVertex(ctx, doc.tenant_id, { tag: 'Document' }, 'documents', id, {
-      title, summary: extracted_summary, keywords: JSON.parse(extracted_keywords), file_type: doc.file_type, content_text: doc.content_text.slice(0, 500),
-    });
-  }
-);
-
-export const deleteDocument = spacetimedb.reducer(
-  { id: t.u64() },
-  (ctx, { id }) => {
-    const doc = ctx.db.documents.id.find(id);
-    if (!doc) throw new Error('Document not found');
-    requireTenant(ctx, doc.tenant_id);
-    deleteKgVertex(ctx, 'documents', id);
-    ctx.db.documents.id.delete(id);
-  }
-);
-
-// ---------------------------------------------------------------------------
-// Memory reducers
-// ---------------------------------------------------------------------------
-
-export const createMemory = spacetimedb.reducer(
-  {
-    tenant_id: t.u64(),
-    title: t.string(),
-    content: t.string(),
-    memory_type: memoryType,
-    source_table: t.option(t.string()),
-    source_id: t.option(t.u64()),
-    created_by: t.u64(),
-  },
-  (ctx, args) => {
-    requireTenant(ctx, args.tenant_id);
-    const mem = ctx.db.memories.insert({
-      id: 0n,
-      tenant_id: args.tenant_id,
-      title: args.title,
-      content: args.content,
-      memory_type: args.memory_type,
-      source_table: args.source_table,
-      source_id: args.source_id,
-      created_by: args.created_by,
-      created_at: ctx.timestamp,
-      updated_at: ctx.timestamp,
-    });
-    syncKgVertex(ctx, args.tenant_id, { tag: 'Memory' }, 'memories', mem.id, {
-      title: args.title,
-      summary: args.content.slice(0, 200),
-      memory_type: args.memory_type.tag,
-      content_text: args.content,
-    });
-    const memVertexId = findKgVertexId(ctx, args.tenant_id, 'memories', mem.id);
-    if (memVertexId && args.source_table !== undefined && args.source_id !== undefined) {
-      const sourceVertexId = findKgVertexId(ctx, args.tenant_id, args.source_table, args.source_id);
-      if (sourceVertexId) {
-        syncKgEdge(ctx, args.tenant_id, memVertexId, sourceVertexId, { tag: 'About' });
-        syncKgEdge(ctx, args.tenant_id, sourceVertexId, memVertexId, { tag: 'HasMemory' });
-        const containerVertexId = findKgVertexId(ctx, args.tenant_id, 'memory_collections', args.source_id);
-        if (containerVertexId) {
-          syncKgEdge(ctx, args.tenant_id, memVertexId, containerVertexId, { tag: 'ContainedIn' });
-        }
-      }
-    }
-  }
-);
-
-export const updateMemory = spacetimedb.reducer(
-  {
-    id: t.u64(),
-    title: t.string(),
-    content: t.string(),
-    memory_type: memoryType,
-  },
-  (ctx, { id, title, content, memory_type }) => {
-    const mem = ctx.db.memories.id.find(id);
-    if (!mem) throw new Error('Memory not found');
-    requireTenant(ctx, mem.tenant_id);
-    ctx.db.memories.id.update({ ...mem, title, content, memory_type, updated_at: ctx.timestamp });
-    syncKgVertex(ctx, mem.tenant_id, { tag: 'Memory' }, 'memories', id, {
-      title, summary: content.slice(0, 200), memory_type: memory_type.tag, content_text: content,
-    });
-  }
-);
-
-export const deleteMemory = spacetimedb.reducer(
-  { id: t.u64() },
-  (ctx, { id }) => {
-    const mem = ctx.db.memories.id.find(id);
-    if (!mem) throw new Error('Memory not found');
-    requireTenant(ctx, mem.tenant_id);
-    deleteKgVertex(ctx, 'memories', id);
-    ctx.db.memories.id.delete(id);
-  }
-);
-
-// ---------------------------------------------------------------------------
-// Collection reducers
-// ---------------------------------------------------------------------------
-
-export const createCollection = spacetimedb.reducer(
-  {
-    tenant_id: t.u64(),
-    name: t.string(),
-    description: t.string(),
-  },
-  (ctx, { tenant_id, name, description }) => {
-    requireTenant(ctx, tenant_id);
-    const coll = ctx.db.memory_collections.insert({
-      id: 0n, tenant_id, name, description,
-      collection_type: { tag: 'Manual' },
-      source_table: undefined, source_id: undefined,
-      created_at: ctx.timestamp, updated_at: ctx.timestamp,
-    });
-    syncKgVertex(ctx, tenant_id, { tag: 'Container' }, 'memory_collections', coll.id, {
-      title: name, summary: description, keywords: [], topics: [], sentiment: 0, language: 'en', importance: 0.5,
-      raw: { name, description, collection_type: 'Manual' }, extracted_facts: [], content_text: description,
-    });
-  }
-);
-
-export const updateCollection = spacetimedb.reducer(
-  {
-    id: t.u64(),
-    name: t.string(),
-    description: t.string(),
-  },
-  (ctx, { id, name, description }) => {
-    const coll = ctx.db.memory_collections.id.find(id);
-    if (!coll) throw new Error('Collection not found');
-    requireTenant(ctx, coll.tenant_id);
-    ctx.db.memory_collections.id.update({ ...coll, name, description, updated_at: ctx.timestamp });
-    syncKgVertex(ctx, coll.tenant_id, { tag: 'Container' }, 'memory_collections', id, {
-      title: name, summary: description, keywords: [], topics: [], sentiment: 0, language: 'en', importance: 0.5,
-      raw: { name, description, collection_type: coll.collection_type.tag }, extracted_facts: [], content_text: description,
-    });
-  }
-);
-
-export const deleteCollection = spacetimedb.reducer(
-  { id: t.u64() },
-  (ctx, { id }) => {
-    const coll = ctx.db.memory_collections.id.find(id);
-    if (!coll) throw new Error('Collection not found');
-    requireTenant(ctx, coll.tenant_id);
-    deleteKgVertex(ctx, 'memory_collections', id);
-    ctx.db.memory_collections.id.delete(id);
-  }
-);
-
-export const addToCollection = spacetimedb.reducer(
-  {
-    collection_id: t.u64(),
-    vertex_id: t.u64(),
-  },
-  (ctx, { collection_id, vertex_id }) => {
-    const coll = ctx.db.memory_collections.id.find(collection_id);
-    if (!coll) throw new Error('Collection not found');
-    requireTenant(ctx, coll.tenant_id);
-    syncKgEdge(ctx, coll.tenant_id, vertex_id, collection_id, { tag: 'ContainedIn' });
-  }
-);
-
-export const removeFromCollection = spacetimedb.reducer(
-  {
-    collection_id: t.u64(),
-    vertex_id: t.u64(),
-  },
-  (ctx, { collection_id, vertex_id }) => {
-    const coll = ctx.db.memory_collections.id.find(collection_id);
-    if (!coll) throw new Error('Collection not found');
-    requireTenant(ctx, coll.tenant_id);
-    deleteEdgesByRelation(ctx, vertex_id, collection_id, 'ContainedIn');
-  }
-);
-
-// ---------------------------------------------------------------------------
-// Embedding & Insight reducers
-// ---------------------------------------------------------------------------
-
-export const updateVertexEmbedding = spacetimedb.reducer(
-  {
-    vertex_id: t.u64(),
-    embedding: t.array(t.f32()),
-  },
-  (ctx, { vertex_id, embedding }) => {
-    const v = ctx.db.kg_vertex.id.find(vertex_id);
-    if (v) {
-      ctx.db.kg_vertex.id.update({ ...v, vector_embedding: embedding });
-    }
-  }
-);
-
-export const createSimilarityEdges = spacetimedb.reducer(
-  {
-    tenant_id: t.u64(),
-    source_vertex_id: t.u64(),
-    top_k: t.u8(),
-  },
-  (ctx, { tenant_id, source_vertex_id, top_k }) => {
-    const source = ctx.db.kg_vertex.id.find(source_vertex_id);
-    if (!source || !source.vector_embedding) return;
-    const sourceVec = source.vector_embedding;
-    const candidates = [];
-    for (const v of ctx.db.kg_vertex.iter()) {
-      if (v.tenant_id === tenant_id && v.id !== source_vertex_id && v.vector_embedding) {
-        const vec = v.vector_embedding;
-        let dot = 0;
-        let sourceNorm = 0;
-        let targetNorm = 0;
-        for (let i = 0; i < sourceVec.length; i++) {
-          dot += sourceVec[i] * vec[i];
-          sourceNorm += sourceVec[i] * sourceVec[i];
-          targetNorm += vec[i] * vec[i];
-        }
-        const similarity = dot / (Math.sqrt(sourceNorm) * Math.sqrt(targetNorm));
-        candidates.push({ vertex_id: v.id, similarity });
-      }
-    }
-    candidates.sort((a, b) => b.similarity - a.similarity);
-    for (let i = 0; i < Math.min(top_k, candidates.length); i++) {
-      const c = candidates[i];
-      syncKgEdge(ctx, tenant_id, source_vertex_id, c.vertex_id, { tag: 'SimilarTo' }, { score: c.similarity }, c.similarity);
-    }
-  }
-);
-
-export const createAiInsight = spacetimedb.reducer(
-  {
-    tenant_id: t.u64(),
-    title: t.string(),
-    content: t.string(),
-    memory_type: memoryType,
-    source_vertex_ids: t.array(t.u64()),
-    target_entity_table: t.option(t.string()),
-    target_entity_id: t.option(t.u64()),
-  },
-  (ctx, args) => {
-    requireTenant(ctx, args.tenant_id);
-    const mem = ctx.db.memories.insert({
-      id: 0n,
-      tenant_id: args.tenant_id,
-      title: args.title,
-      content: args.content,
-      memory_type: args.memory_type,
-      source_table: args.target_entity_table,
-      source_id: args.target_entity_id,
-      created_by: 0n,
-      created_at: ctx.timestamp,
-      updated_at: ctx.timestamp,
-    });
-    syncKgVertex(ctx, args.tenant_id, { tag: 'Memory' }, 'memories', mem.id, {
-      title: args.title,
-      summary: args.content.slice(0, 200),
-      memory_type: args.memory_type.tag,
-      content_text: args.content,
-    });
-    const memVertexId = findKgVertexId(ctx, args.tenant_id, 'memories', mem.id);
-    if (memVertexId) {
-      for (const sourceId of args.source_vertex_ids) {
-        syncKgEdge(ctx, args.tenant_id, memVertexId, sourceId, { tag: 'ExtractedFrom' });
-      }
-      if (args.target_entity_table !== undefined && args.target_entity_id !== undefined) {
-        const targetVertexId = findKgVertexId(ctx, args.tenant_id, args.target_entity_table, args.target_entity_id);
-        if (targetVertexId) {
-          syncKgEdge(ctx, args.tenant_id, memVertexId, targetVertexId, { tag: 'About' });
-          syncKgEdge(ctx, args.tenant_id, targetVertexId, memVertexId, { tag: 'HasMemory' });
-          const containerVertexId = findKgVertexId(ctx, args.tenant_id, 'memory_collections', args.target_entity_id);
-          if (containerVertexId) {
-            syncKgEdge(ctx, args.tenant_id, memVertexId, containerVertexId, { tag: 'ContainedIn' });
-          }
-        }
-      }
-    }
   }
 );

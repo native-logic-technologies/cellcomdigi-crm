@@ -1,8 +1,9 @@
 import { useMemo } from 'react';
 import {
   X, Building2, Phone, Mail, Globe, MapPin, FileText,
-  ClipboardList, Receipt,
+  ClipboardList, Receipt, Brain,
 } from 'lucide-react';
+import SupermemoryPanel from './SupermemoryPanel';
 import { useTable } from '../spacetime/hooks';
 import {
   Badge, Avatar, Card, CardBody, Tabs, Tab,
@@ -278,6 +279,21 @@ export default function CompanyDrawer({ company, onClose }: CompanyDrawerProps) 
                     </Card>
                   ))
                 )}
+              </div>
+            </Tab>
+
+            <Tab key="supermemory" title={
+              <span className="flex items-center gap-1">
+                <Brain className="w-3.5 h-3.5" /> Supermemory
+              </span>
+            }>
+              <div className="px-6 py-4">
+                <SupermemoryPanel
+                  tenantId={company.tenantId}
+                  entityTable="companies"
+                  entityId={company.id}
+                  websiteUrl={company.website || undefined}
+                />
               </div>
             </Tab>
           </Tabs>

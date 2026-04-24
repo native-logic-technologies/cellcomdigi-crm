@@ -1,0 +1,19 @@
+{
+  "name": "cellcomcrm-api",
+  "version": "1.0.0",
+  "description": "API Gateway for external AI agents to query the CRM Knowledge Graph",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "build": "tsc",
+    "start": "node dist/main.js"
+  },
+  "dependencies": {
+    "fastify": "^5.3.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.3",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3"
+  }
+}

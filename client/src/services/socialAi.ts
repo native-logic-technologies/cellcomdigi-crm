@@ -28,6 +28,9 @@ function buildSystemPrompt(context: SocialContext): string {
 
   return `You are a Malaysian social media strategist who creates high-performing content for SMEs.
 
+SUPERMEMORY GRAPH CONTEXT:
+${context.graphContext || 'No detailed context available.'}
+
 BUSINESS CONTEXT:
 - Companies: ${companies || 'Malaysian SMEs'}
 - Products/Services: ${products || 'business solutions'}
@@ -62,11 +65,12 @@ OUTPUT FORMAT — respond ONLY with valid JSON:
 }`;
 }
 
-interface SocialContext {
+export interface SocialContext {
   companies: any[];
   products: any[];
   wonDeals: any[];
   contacts: any[];
+  graphContext?: string;
 }
 
 export async function generateSocialBatch(

@@ -67,6 +67,22 @@ cellcomcrm/
 │           ├── types.ts
 │           ├── index.ts
 │           └── *_table.ts / *_reducer.ts
+├── server/api/                  # API Gateway for external AI agents
+│   ├── package.json
+│   ├── tsconfig.json
+│   └── src/
+│       ├── main.ts              # Fastify server entry
+│       ├── graphStore.ts        # In-memory KG indexes
+│       ├── spacetimeClient.ts   # HTTP SQL client for SpacetimeDB
+│       ├── auth.ts              # API key middleware
+│       ├── config.ts            # Environment config
+│       ├── types.ts             # Shared TS types
+│       └── routes/
+│           ├── health.ts
+│           ├── vertices.ts
+│           ├── neighbors.ts
+│           ├── search.ts
+│           └── context.ts
 ├── generate-bindings.sh         # Script to regenerate client bindings
 ├── README.md
 └── AGENTS.md                    # This file
@@ -118,6 +134,57 @@ Whenever the server schema or reducers change, run:
 ```
 
 This builds the server module and runs `spacetime generate --lang typescript` into `client/src/generated/`.
+
+### Build and run the API Gateway
+
+```bash
+cd server/api
+npm install
+npm run build     # Compiles TypeScript to dist/
+API_KEYS=your-api-key,spacetime-local npm start
+```
+
+The gateway listens on `PORT` (default 4000) and polls SpacetimeDB every 2 seconds to keep an in-memory cache of `kg_vertex` and `kg_edge` hot.
+
+**Environment variables:**
+- `PORT` — HTTP port (default: 4000)
+- `SPACETIME_HOST` — SpacetimeDB HTTP endpoint (default: http://127.0.0.1:3001)
+- `SPACETIME_DB` — Database name (default: cellcom-crm)
+- `API_KEYS` — Comma-separated list of valid bearer tokens
+
+### API Endpoints (external AI agents)
+
+All endpoints except `/health` require `Authorization: Bearer <api_key>`.
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/health` | Liveness + graph stats |
+| GET | `/v1/graph/vertices` | Filter by `tenant_id`, `entity_type`, `source_table`, `limit`, `offset` |
+| GET | `/v1/graph/vertices/:id` | Single vertex by ID |
+| GET | `/v1/graph/vertices/:id/neighbors` | 1–3 hop neighbors (`depth`, `direction`, `relation_type`) |
+| POST | `/v1/graph/search` | Keyword + semantic search (`tenant_id`, `query`, `embedding`, `limit`) |
+| GET | `/v1/graph/context/:entityType/:sourceId` | Full context bundle (contact/company/deal intelligence) |
+
+**Example:**
+```bash
+curl -H "Authorization: Bearer your-api-key" \
+  "http://localhost:4000/v1/graph/context/Contact/1?tenant_id=1"
+```
+
+Response:
+```json
+{
+  "data": {
+    "target": { "id": "1", "entityType": { "tag": "Contact" }, ... },
+    "container": { ... },
+    "neighbors": [ ... ],
+    "memories": [ ... ],
+    "documents": [ ... ],
+    "formatted": "# Contact Intelligence: ..."
+  },
+  "meta": { "queryMs": 0.4, "cachedAt": "2026-04-24T00:00:00Z" }
+}
+```
 
 ## Runtime Architecture
 
@@ -186,6 +253,7 @@ There is **no test framework** currently configured in this project. If you add 
 
 - **SpacetimeDB module**: Publish via `spacetime publish` to either a local node or SpacetimeDB Cloud (`maincloud`). Configs live in `server/spacetime.json` (cloud) and `server/spacetime.local.json` (local).
 - **Client**: The client is a static SPA. Build with `npm run build` and serve the `client/dist/` folder from any static host (e.g., Vercel, Netlify, Nginx, S3).
+- **API Gateway**: Run `cd server/api && npm run build && API_KEYS=... npm start` on the same VPS as SpacetimeDB (or any host that can reach it). Put it behind nginx with SSL termination. The gateway is stateless except for its in-memory graph cache.
 
 ## Common Pitfalls for Agents
 
@@ -195,4 +263,4 @@ There is **no test framework** currently configured in this project. If you add 
 4. **BigInt literals need the `n` suffix.** Example: `tenant_id: 1n`.
 5. **Currency is in cents.** Divide by 100 and format when displaying to users.
 6. **The KG does not replace operational tables.** Always mutate operational tables via reducers; the KG syncs automatically.
-7. **No traditional REST API.** All data access goes through SpacetimeDB subscriptions and reducers.
+7. **No traditional REST API for the client.** All client data access goes through SpacetimeDB subscriptions and reducers. The API Gateway (`server/api/`) provides a REST interface for external AI agents only.
