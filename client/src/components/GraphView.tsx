@@ -5,13 +5,13 @@ import PageHeader from './PageHeader';
 import { Card, CardBody } from '@nextui-org/react';
 
 const ENTITY_COLORS: Record<string, string> = {
-  Contact: '#4f46e5',
+  Contact: '#0078d4',
   Company: '#10b981',
   Deal: '#f59e0b',
   Message: '#8b5cf6',
   Invoice: '#f43f5e',
   Product: '#0ea5e9',
-  User: '#6366f1',
+  User: '#0087d7',
   WorkflowRun: '#84cc16',
   Payment: '#ec4899',
   Activity: '#14b8a6',
@@ -29,7 +29,7 @@ const ENTITY_COLORS: Record<string, string> = {
 
 const RELATION_COLORS: Record<string, string> = {
   BelongsTo: '#94a3b8',
-  CommunicatedWith: '#4f46e5',
+  CommunicatedWith: '#0078d4',
   Purchased: '#10b981',
   WorksAt: '#f59e0b',
   Triggered: '#8b5cf6',
@@ -39,7 +39,7 @@ const RELATION_COLORS: Record<string, string> = {
   HadActivity: '#14b8a6',
   ParticipatedIn: '#22d3ee',
   Sent: '#3b82f6',
-  Received: '#6366f1',
+  Received: '#0087d7',
   Contains: '#f59e0b',
   PaidFor: '#ec4899',
   About: '#fbbf24',

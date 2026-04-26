@@ -99,12 +99,16 @@ export default function Layout({ page, setPage, children, user, onLogout }: {
       >
         {/* Logo */}
         <div className="h-16 flex items-center px-4 border-b border-slate-100">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center shadow-sm shadow-brand-200">
-            <span className="text-white font-bold text-sm font-outfit">CC</span>
+          <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-[#009bdf] to-[#0064dc] flex items-center justify-center shadow-sm shrink-0">
+            <img
+              src="/celcomdigi-logo.svg"
+              alt="CelcomDigi"
+              className="h-6 w-auto"
+            />
           </div>
           {!collapsed && (
             <span className="ml-3 font-semibold text-slate-800 font-outfit text-lg tracking-tight">
-              CellCom
+              CelcomDigi
             </span>
           )}
           <button

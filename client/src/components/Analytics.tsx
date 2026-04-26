@@ -9,7 +9,7 @@ import { Card, CardBody } from '@nextui-org/react';
 import PageHeader from './PageHeader';
 import StatCard from './StatCard';
 
-const COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6'];
+const COLORS = ['#0078d4', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6'];
 
 function formatRM(cents: number) {
   return `RM ${(cents / 100).toLocaleString('en-MY', { minimumFractionDigits: 2 })}`;
@@ -133,7 +133,7 @@ export default function Analytics() {
                     formatter={(val: any, _name: any) => [`RM ${Number(val ?? 0).toLocaleString('en-MY')}`, 'Value']}
                     contentStyle={{ borderRadius: 8, border: '1px solid #e2e8f0' }}
                   />
-                  <Bar dataKey="value" fill="#4f46e5" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="value" fill="#0078d4" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

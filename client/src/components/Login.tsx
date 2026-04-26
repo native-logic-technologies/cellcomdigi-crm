@@ -35,7 +35,7 @@ export default function Login({ onLogin }: LoginProps) {
           <div className="w-16 h-16 rounded-2xl bg-brand-600 mx-auto mb-4 flex items-center justify-center shadow-lg shadow-brand-200">
             <Shield className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-slate-900 font-outfit">CellCom CRM</h1>
+          <h1 className="text-2xl font-bold text-slate-900 font-outfit">CelcomDigi CRM</h1>
           <p className="text-sm text-slate-500 mt-1">Unified sales & customer management</p>
         </div>
 
@@ -104,7 +104,7 @@ export default function Login({ onLogin }: LoginProps) {
         </Card>
 
         <p className="text-xs text-slate-400 text-center mt-6">
-          &copy; {new Date().getFullYear()} CellCom Digi. All rights reserved.
+          &copy; {new Date().getFullYear()} CelcomDigi. All rights reserved.
         </p>
       </div>
     </div>

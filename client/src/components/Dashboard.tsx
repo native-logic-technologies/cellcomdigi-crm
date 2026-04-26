@@ -27,7 +27,7 @@ const ACTIVITY_COLORS: Record<string, string> = {
   Task: 'bg-rose-50 text-rose-600',
 };
 
-const PIE_COLORS = ['#4f46e5', '#10b981', '#f43f5e', '#f59e0b'];
+const PIE_COLORS = ['#0078d4', '#10b981', '#f43f5e', '#f59e0b'];
 
 export default function Dashboard() {
   const [contacts] = useTable('contacts');
@@ -132,7 +132,7 @@ export default function Dashboard() {
       <div className="flex items-end justify-between">
         <div>
           <h1 className="text-3xl font-semibold font-outfit text-slate-900">
-            Good morning, Demo User
+            Welcome to CelcomDigi CRM
           </h1>
           <p className="text-sm text-slate-500 mt-1">
             {new Date().toLocaleDateString('en-MY', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
@@ -182,7 +182,7 @@ export default function Dashboard() {
                     formatter={(value: any) => formatRM(value as number)}
                     contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '12px' }}
                   />
-                  <Bar dataKey="value" fill="#4f46e5" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="value" fill="#0078d4" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

@@ -13,7 +13,7 @@ interface StatCardProps {
 }
 
 const colorMap = {
-  indigo: { bg: 'bg-brand-50', icon: 'text-brand-600', stroke: '#4f46e5', fill: '#eef2ff' },
+  indigo: { bg: 'bg-brand-50', icon: 'text-brand-600', stroke: '#0078d4', fill: '#e6f3fb' },
   emerald: { bg: 'bg-emerald-50', icon: 'text-emerald-600', stroke: '#10b981', fill: '#ecfdf5' },
   rose: { bg: 'bg-rose-50', icon: 'text-rose-600', stroke: '#f43f5e', fill: '#fff1f2' },
   amber: { bg: 'bg-amber-50', icon: 'text-amber-600', stroke: '#f59e0b', fill: '#fffbeb' },

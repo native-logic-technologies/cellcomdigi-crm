@@ -55,7 +55,7 @@ export default function DealsAnalytics() {
     return [
       { name: 'Won', value: won, color: '#10b981' },
       { name: 'Lost', value: lost, color: '#f43f5e' },
-      { name: 'Open', value: open, color: '#4f46e5' },
+      { name: 'Open', value: open, color: '#0078d4' },
     ];
   }, [deals]);
 
@@ -174,7 +174,7 @@ export default function DealsAnalytics() {
                   formatter={(value: any) => [`RM ${Number(value).toLocaleString()}`, 'Value']}
                   contentStyle={{ borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 12 }}
                 />
-                <Bar dataKey="value" fill="#4f46e5" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="value" fill="#0078d4" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardBody>
