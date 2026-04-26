@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Plus, Wand2, Sparkles, Save, Play, Pause, Trash2, Mail, Bot } from 'lucide-react';
+import VoiceInput from './VoiceInput';
 import { useTable, useDb } from '../spacetime/hooks';
 import PageHeader from './PageHeader';
 import ConfirmDialog from './ConfirmDialog';
@@ -166,13 +167,22 @@ export default function AutomationBuilder() {
                   Tell us what you want to automate in plain English. Our AI (powered by{' '}
                   <span className="font-semibold text-brand-600">Mercury 2</span>) will design a workflow for you.
                 </p>
-                <Textarea
-                  placeholder="Example: Send a follow up email to each website order, welcoming the customer to our brand..."
-                  value={description}
-                  onValueChange={setDescription}
-                  minRows={4}
-                  classNames={{ input: 'text-sm placeholder:text-slate-400' }}
-                />
+                <div className="relative">
+                  <Textarea
+                    placeholder="Example: Send a follow up email to each website order, welcoming the customer to our brand... (or click the mic to speak)"
+                    value={description}
+                    onValueChange={setDescription}
+                    minRows={4}
+                    classNames={{ input: 'text-sm placeholder:text-slate-400 pr-10' }}
+                  />
+                  <div className="absolute top-2 right-2">
+                    <VoiceInput
+                      onTranscript={setDescription}
+                      append
+                      currentText={description}
+                    />
+                  </div>
+                </div>
                 <div className="flex gap-2 flex-wrap">
                   {[
                     'Send a welcome email to new website contacts',
