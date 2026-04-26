@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Send, Archive, MessageCircle } from 'lucide-react';
+import { safeDate, formatRelative, formatTime } from '../lib/dateUtils';
 import { useTable, useDb } from '../spacetime/hooks';
 import PageHeader from './PageHeader';
 import {
@@ -17,15 +18,21 @@ export default function Inbox() {
 
   const contactMap = new Map(contacts.map((c: any) => [c.id, c]));
 
-  const sortedConversations = [...conversations].sort((a: any, b: any) =>
-    new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime()
-  );
+  const sortedConversations = [...conversations].sort((a: any, b: any) => {
+    const da = safeDate(a.lastMessageAt);
+    const db = safeDate(b.lastMessageAt);
+    return (db?.getTime() ?? 0) - (da?.getTime() ?? 0);
+  });
 
   const selectedConversation = sortedConversations.find((c: any) => c.id === selectedConv);
   const convMessages = selectedConversation
     ? messages
         .filter((m: any) => m.conversationId === selectedConversation.id)
-        .sort((a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+        .sort((a: any, b: any) => {
+          const da = safeDate(a.createdAt);
+          const db = safeDate(b.createdAt);
+          return (da?.getTime() ?? 0) - (db?.getTime() ?? 0);
+        })
     : [];
 
   const sendReply = () => {
@@ -81,7 +88,7 @@ export default function Inbox() {
                       </div>
                       <div className="flex items-center gap-1.5 mt-0.5">
                         <Badge variant="flat" size="sm" className="text-[10px] h-4 bg-slate-100 text-slate-600">{conv.channel?.tag}</Badge>
-                        <span className="text-xs text-slate-400">{new Date(conv.lastMessageAt).toLocaleDateString()}</span>
+                        <span className="text-xs text-slate-400">{formatRelative(conv.lastMessageAt)}</span>
                       </div>
                     </div>
                   </div>
@@ -118,16 +125,20 @@ export default function Inbox() {
               <ScrollShadow className="flex-1 p-4 space-y-3">
                 {convMessages.map((msg: any) => {
                   const isOutbound = msg.direction?.tag === 'Outbound';
+                  const senderName = isOutbound ? 'You' : (contactMap.get(selectedConversation.contactId)?.name ?? 'Contact');
                   return (
                     <div key={msg.id.toString()} className={`flex ${isOutbound ? 'justify-end' : 'justify-start'}`}>
-                      <Card className={`max-w-[70%] shadow-sm ${isOutbound ? 'bg-brand-600 text-white' : 'bg-white border border-slate-100'}`}>
-                        <CardBody className="py-2.5 px-3.5">
-                          <p className="text-sm">{msg.body}</p>
-                          <p className={`text-[10px] mt-1 ${isOutbound ? 'text-brand-100' : 'text-slate-400'}`}>
-                            {new Date(msg.createdAt).toLocaleTimeString()}
-                          </p>
-                        </CardBody>
-                      </Card>
+                      <div className={`max-w-[75%] ${isOutbound ? 'items-end' : 'items-start'} flex flex-col gap-0.5`}>
+                        <span className={`text-[10px] px-1 ${isOutbound ? 'text-slate-400' : 'text-slate-500'}`}>{senderName}</span>
+                        <Card className={`shadow-sm ${isOutbound ? 'bg-brand-600 text-white' : 'bg-white border border-slate-100'}`}>
+                          <CardBody className="py-2 px-3">
+                            <p className="text-sm">{msg.body}</p>
+                          </CardBody>
+                        </Card>
+                        <span className={`text-[10px] px-1 ${isOutbound ? 'text-slate-400' : 'text-slate-400'}`}>
+                          {formatTime(msg.createdAt)}
+                        </span>
+                      </div>
                     </div>
                   );
                 })}

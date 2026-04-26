@@ -455,7 +455,7 @@ export default function Deals() {
 
       <Tabs
         selectedKey={dealView}
-        onSelectionChange={(k: any) => setDealView(Array.from(k)[0] as 'pipeline' | 'analytics')}
+        onSelectionChange={(k: any) => setDealView(k as 'pipeline' | 'analytics')}
         classNames={{
           base: 'w-full',
           tabList: 'gap-6 bg-transparent',

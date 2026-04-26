@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { Search, Pencil, Trash2 } from 'lucide-react';
+import { Search, Pencil, Trash2, RefreshCw, Store } from 'lucide-react';
 import { useTable, useDb } from '../spacetime/hooks';
 import PageHeader from './PageHeader';
 import ConfirmDialog from './ConfirmDialog';
 import {
   Button, Input, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter,
   Table, TableHeader, TableColumn, TableBody, TableRow, TableCell,
-  Card, CardBody, Badge
+  Card, CardBody
 } from '@nextui-org/react';
 
 export default function Products() {
@@ -107,11 +107,11 @@ export default function Products() {
               {filtered.map((p: any) => (
                 <TableRow key={p.id.toString()} className="hover:bg-slate-50/60 transition-colors">
                   <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Badge color="primary" variant="flat" className="w-8 h-8 rounded-lg flex items-center justify-center p-0 bg-brand-100 text-brand-700">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-brand-100 text-brand-700 shrink-0">
                         <span className="text-xs font-bold">{p.name.charAt(0)}</span>
-                      </Badge>
-                      <span className="font-medium text-slate-800">{p.name}</span>
+                      </div>
+                      <span className="font-medium text-slate-800 truncate">{p.name}</span>
                     </div>
                   </TableCell>
                   <TableCell className="text-slate-600">{p.sku ?? '—'}</TableCell>
@@ -155,6 +155,49 @@ export default function Products() {
           </ModalFooter>
         </ModalContent>
       </Modal>
+
+      {/* Shop sync section */}
+      <Card className="border border-slate-100 shadow-sm">
+        <CardBody className="p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Store className="w-5 h-5 text-slate-500" />
+              <h3 className="font-semibold text-slate-800">Shop Integrations</h3>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {['Shopify', 'Shopee', 'Lazada'].map((shop) => {
+              const connected = localStorage.getItem(`shop_${shop.toLowerCase()}`) === 'true';
+              return (
+                <div key={shop} className={`flex items-center justify-between p-3 rounded-xl border ${connected ? 'bg-emerald-50/50 border-emerald-200' : 'bg-slate-50 border-slate-100'}`}>
+                  <div className="flex items-center gap-2">
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold ${connected ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-500'}`}>
+                      {shop.charAt(0)}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-slate-800">{shop}</p>
+                      <p className="text-[10px] text-slate-400">{connected ? 'Synced' : 'Not connected'}</p>
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant={connected ? 'light' : 'bordered'}
+                    className="h-7 px-2 text-xs"
+                    onPress={() => {
+                      const key = `shop_${shop.toLowerCase()}`;
+                      if (connected) localStorage.removeItem(key);
+                      else localStorage.setItem(key, 'true');
+                      window.location.reload();
+                    }}
+                  >
+                    {connected ? <RefreshCw className="w-3 h-3" /> : 'Connect'}
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        </CardBody>
+      </Card>
 
       <ConfirmDialog isOpen={confirmOpen} onClose={() => setConfirmOpen(false)} onConfirm={remove} title="Delete product?" description="This will permanently remove the product from your catalog." confirmLabel="Delete" />
     </div>

@@ -1,11 +1,12 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Users, Banknote, Inbox, FileText,
   TrendingUp, Phone, Mail, MessageSquare, Calendar,
-  ArrowRight
+  ArrowRight, X
 } from 'lucide-react';
 import { useTable } from '../spacetime/hooks';
-import { Card, CardBody, CardHeader, Button } from '@nextui-org/react';
+import { Card, CardBody, CardHeader, Button, Modal, ModalContent, ModalHeader, ModalBody } from '@nextui-org/react';
+import { safeDate, formatTime, formatRelative } from '../lib/dateUtils';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer,
   PieChart, Pie, Cell
@@ -79,18 +80,24 @@ export default function Dashboard() {
       .map(([name, value]) => ({ name, value }));
   }, [deals]);
 
+  const [showAllActivity, setShowAllActivity] = useState(false);
+
   // Recent activities grouped
   const recentActivities = useMemo(() => {
     const sorted = [...activities].sort(
-      (a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      (a: any, b: any) => {
+        const da = safeDate(a.createdAt);
+        const db = safeDate(b.createdAt);
+        return (db?.getTime() ?? 0) - (da?.getTime() ?? 0);
+      }
     ).slice(0, 8);
 
     const groups: { label: string; items: any[] }[] = [];
     const now = new Date();
 
     for (const a of sorted) {
-      const date = new Date(a.createdAt);
-      const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+      const date = safeDate(a.createdAt);
+      const diffDays = date ? Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24)) : 999;
       let label = 'Earlier';
       if (diffDays === 0) label = 'Today';
       else if (diffDays === 1) label = 'Yesterday';
@@ -101,6 +108,16 @@ export default function Dashboard() {
       else groups.push({ label, items: [a] });
     }
     return groups;
+  }, [activities]);
+
+  const allActivities = useMemo(() => {
+    return [...activities].sort(
+      (a: any, b: any) => {
+        const da = safeDate(a.createdAt);
+        const db = safeDate(b.createdAt);
+        return (db?.getTime() ?? 0) - (da?.getTime() ?? 0);
+      }
+    );
   }, [activities]);
 
   const quickActions = [
@@ -220,7 +237,7 @@ export default function Dashboard() {
             <h3 className="text-base font-semibold font-outfit text-slate-900">Recent Activity</h3>
             <p className="text-xs text-slate-400 mt-0.5">Latest actions across your team</p>
           </div>
-          <Button size="sm" variant="light" className="text-brand-600 font-medium" endContent={<ArrowRight className="w-3.5 h-3.5" />}>
+          <Button size="sm" variant="light" className="text-brand-600 font-medium" endContent={<ArrowRight className="w-3.5 h-3.5" />} onPress={() => setShowAllActivity(true)}>
             View all
           </Button>
         </CardHeader>
@@ -251,7 +268,7 @@ export default function Dashboard() {
                           <p className="text-xs text-slate-400 mt-0.5">{a.description}</p>
                         </div>
                         <span className="text-[11px] text-slate-400 shrink-0">
-                          {new Date(a.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          {formatTime(a.createdAt)}
                         </span>
                       </div>
                     );
@@ -262,6 +279,42 @@ export default function Dashboard() {
           </div>
         </CardBody>
       </Card>
+      {/* View All Activity Modal */}
+      <Modal isOpen={showAllActivity} onOpenChange={setShowAllActivity} size="lg" scrollBehavior="inside">
+        <ModalContent>
+          <ModalHeader className="flex items-center justify-between">
+            <span>All Activity</span>
+            <Button isIconOnly size="sm" variant="light" onPress={() => setShowAllActivity(false)}><X className="w-4 h-4" /></Button>
+          </ModalHeader>
+          <ModalBody className="py-4">
+            <div className="space-y-4">
+              {allActivities.map((a: any) => {
+                const contact = a.contactId ? contactMap.get(a.contactId) : null;
+                const user = userMap.get(a.createdBy);
+                const typeTag = a.type?.tag ?? a.type;
+                const ActivityIcon = ACTIVITY_ICONS[typeTag] ?? Calendar;
+                return (
+                  <div key={a.id.toString()} className="flex items-start gap-3">
+                    <div className={`p-2 rounded-lg shrink-0 ${ACTIVITY_COLORS[typeTag] ?? 'bg-slate-100 text-slate-600'}`}>
+                      <ActivityIcon className="w-3.5 h-3.5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-slate-700">
+                        <span className="font-medium">{user?.name ?? 'Someone'}</span>
+                        {' '}had a <span className="font-medium">{typeTag}</span>
+                        {contact && <> with <span className="font-medium">{contact.name}</span></>}
+                      </p>
+                      <p className="text-xs text-slate-400 mt-0.5">{a.description}</p>
+                    </div>
+                    <span className="text-[11px] text-slate-400 shrink-0">{formatRelative(a.createdAt)}</span>
+                  </div>
+                );
+              })}
+              {allActivities.length === 0 && <p className="text-sm text-slate-400 text-center py-8">No activity yet</p>}
+            </div>
+          </ModalBody>
+        </ModalContent>
+      </Modal>
     </div>
   );
 }

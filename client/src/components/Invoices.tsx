@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Search, Pencil, Trash2, CheckCircle } from 'lucide-react';
+import { Search, Pencil, Trash2, CheckCircle, Eye, X } from 'lucide-react';
+import { formatDate } from '../lib/dateUtils';
 import { useTable, useDb } from '../spacetime/hooks';
 import PageHeader from './PageHeader';
 import ConfirmDialog from './ConfirmDialog';
@@ -26,6 +27,7 @@ export default function Invoices() {
   const [editing, setEditing] = useState<any | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<bigint | null>(null);
+  const [viewingInvoice, setViewingInvoice] = useState<any | null>(null);
   const [form, setForm] = useState({
     invoiceNumber: '', contactId: '', issueDate: '', dueDate: '',
     subtotal: '', taxAmount: '', total: '', currency: 'MYR', status: 'Draft',
@@ -95,6 +97,12 @@ export default function Invoices() {
     setDeletingId(null);
   };
 
+  const statusBadge = (status: string) => (
+    <Badge color={statusColorMap[status] ?? 'default'} variant="flat" size="sm" className="font-medium">
+      {status}
+    </Badge>
+  );
+
   const formatRM = (cents: number) => `RM ${(cents / 100).toLocaleString('en-MY', { minimumFractionDigits: 2 })}`;
 
   return (
@@ -136,7 +144,7 @@ export default function Invoices() {
                       {inv.status?.tag}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-slate-600">{new Date(inv.dueDate).toLocaleDateString()}</TableCell>
+                  <TableCell className="text-slate-600">{formatDate(inv.dueDate)}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1.5">
                       <CheckCircle className={`w-3.5 h-3.5 ${inv.lhdnValidationStatus?.tag === 'Validated' ? 'text-emerald-500' : inv.lhdnValidationStatus?.tag === 'Failed' ? 'text-rose-500' : 'text-amber-500'}`} />
@@ -147,6 +155,9 @@ export default function Invoices() {
                   </TableCell>
                   <TableCell>
                     <div className="flex justify-end gap-1">
+                      <Button isIconOnly size="sm" variant="light" className="text-slate-400 hover:text-slate-700" onPress={() => setViewingInvoice(inv)}>
+                        <Eye className="w-4 h-4" />
+                      </Button>
                       <Button isIconOnly size="sm" variant="light" className="text-slate-400 hover:text-slate-700" onPress={() => openEdit(inv)}>
                         <Pencil className="w-4 h-4" />
                       </Button>
@@ -189,6 +200,61 @@ export default function Invoices() {
             <Button variant="light" onPress={() => setModalOpen(false)}>Cancel</Button>
             <Button color="primary" className="bg-brand-600" onPress={save}>Save</Button>
           </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* View Invoice Modal */}
+      <Modal isOpen={!!viewingInvoice} onOpenChange={() => setViewingInvoice(null)} size="lg">
+        <ModalContent>
+          {viewingInvoice && (
+            <>
+              <ModalHeader className="flex items-center justify-between text-slate-900 font-outfit">
+                <span>Invoice {viewingInvoice.invoiceNumber}</span>
+                <Button isIconOnly size="sm" variant="light" onPress={() => setViewingInvoice(null)}><X className="w-4 h-4" /></Button>
+              </ModalHeader>
+              <ModalBody className="gap-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-slate-500">Contact</p>
+                    <p className="font-medium text-slate-800">{contactMap.get(viewingInvoice.contactId)?.name ?? '—'}</p>
+                  </div>
+                  {statusBadge(viewingInvoice.status?.tag)}
+                </div>
+                <div className="grid grid-cols-3 gap-4 text-sm">
+                  <div>
+                    <p className="text-slate-500">Issue Date</p>
+                    <p className="font-medium text-slate-800">{formatDate(viewingInvoice.issueDate)}</p>
+                  </div>
+                  <div>
+                    <p className="text-slate-500">Due Date</p>
+                    <p className="font-medium text-slate-800">{formatDate(viewingInvoice.dueDate)}</p>
+                  </div>
+                  <div>
+                    <p className="text-slate-500">Currency</p>
+                    <p className="font-medium text-slate-800">{viewingInvoice.currency}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-4 text-sm">
+                  <div>
+                    <p className="text-slate-500">Subtotal</p>
+                    <p className="font-medium text-slate-800">{formatRM(Number(viewingInvoice.subtotal))}</p>
+                  </div>
+                  <div>
+                    <p className="text-slate-500">Tax</p>
+                    <p className="font-medium text-slate-800">{formatRM(Number(viewingInvoice.taxAmount))}</p>
+                  </div>
+                  <div>
+                    <p className="text-slate-500">Total</p>
+                    <p className="font-bold text-slate-900 text-lg">{formatRM(Number(viewingInvoice.total))}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
+                  <CheckCircle className={`w-4 h-4 ${viewingInvoice.lhdnValidationStatus?.tag === 'Validated' ? 'text-emerald-500' : viewingInvoice.lhdnValidationStatus?.tag === 'Failed' ? 'text-rose-500' : 'text-amber-500'}`} />
+                  <span className="text-sm text-slate-600">LHDN Status: <span className="font-medium">{viewingInvoice.lhdnValidationStatus?.tag}</span></span>
+                </div>
+              </ModalBody>
+            </>
+          )}
         </ModalContent>
       </Modal>
 

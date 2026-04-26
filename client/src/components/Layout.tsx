@@ -11,7 +11,7 @@ import {
   Input, Tooltip, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem,
 } from '@nextui-org/react';
 
-type Page = 'dashboard' | 'contacts' | 'companies' | 'deals' | 'inbox' | 'products' | 'invoices' | 'graph' | 'automations' | 'analytics' | 'social' | 'knowledgebase';
+type Page = 'dashboard' | 'contacts' | 'companies' | 'deals' | 'inbox' | 'products' | 'invoices' | 'graph' | 'automations' | 'analytics' | 'social' | 'knowledgebase' | 'settings';
 
 interface NavSection {
   label: string;
@@ -61,6 +61,7 @@ const pageTitles: Record<Page, { title: string; subtitle: string }> = {
   analytics: { title: 'Analytics', subtitle: 'Pipeline performance and conversion metrics' },
   social: { title: 'Social Planner', subtitle: 'Plan, generate, and publish social content' },
   knowledgebase: { title: 'Knowledge Base', subtitle: 'Documents, memories, and intelligence containers' },
+  settings: { title: 'Settings', subtitle: 'Manage your profile and company information' },
 };
 
 export default function Layout({ page, setPage, children, user, onLogout }: {
@@ -245,7 +246,7 @@ export default function Layout({ page, setPage, children, user, onLogout }: {
                 />
               </DropdownTrigger>
               <DropdownMenu aria-label="User menu">
-                <DropdownItem key="settings" startContent={<Settings className="w-4 h-4" />}>Settings</DropdownItem>
+                <DropdownItem key="settings" startContent={<Settings className="w-4 h-4" />} onPress={() => setPage('settings')}>Settings</DropdownItem>
                 <DropdownItem key="logout" startContent={<LogOut className="w-4 h-4" />} className="text-rose-600" onPress={onLogout}>
                   Log out
                 </DropdownItem>

@@ -55,7 +55,6 @@ export default function SocialPlanner() {
   const [aiModalOpen, setAiModalOpen] = useState(false);
   const [broadcastOpen, setBroadcastOpen] = useState(false);
   const [broadcastPost, setBroadcastPost] = useState<any | null>(null);
-  const [tiktokConnected, setTiktokConnected] = useState(() => localStorage.getItem('tiktok_connected') === 'true');
 
   const activeCampaign = campaigns[0];
 
@@ -130,51 +129,68 @@ export default function SocialPlanner() {
         onAction={openCreate}
       />
 
-      {/* Campaign bar */}
+      {/* Compact campaign & connections bar */}
       <Card className="border border-slate-100 shadow-sm">
-        <CardBody className="py-3 px-4 flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2">
-            <Share2 className="w-4 h-4 text-brand-600" />
-            <span className="text-sm font-semibold text-slate-800">
+        <CardBody className="py-2 px-4 flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <Share2 className="w-4 h-4 text-brand-600 shrink-0" />
+            <span className="text-sm font-semibold text-slate-800 truncate">
               {activeCampaign?.name ?? 'No active campaign'}
             </span>
             {activeCampaign && (
-              <Badge variant="flat" size="sm" className="bg-brand-50 text-brand-700 border border-brand-200">
+              <Badge variant="flat" size="sm" className="bg-brand-50 text-brand-700 border border-brand-200 shrink-0">
                 {activeCampaign.status?.tag}
               </Badge>
             )}
           </div>
           <div className="flex-1" />
-          <Select
-            className="max-w-[140px]"
-            size="sm"
-            aria-label="Filter by platform"
-            selectedKeys={platformFilter ? [platformFilter] : []}
-            onSelectionChange={(keys) => setPlatformFilter(Array.from(keys)[0] as string || '')}
-            items={[{key: '', label: 'All Platforms'}, {key: 'TikTok', label: 'TikTok'}, {key: 'Whatsapp', label: 'WhatsApp'}, {key: 'Instagram', label: 'Instagram'}, {key: 'Facebook', label: 'Facebook'}]}
-          >
-            {(item: any) => <SelectItem key={item.key} textValue={item.label}>{item.label}</SelectItem>}
-          </Select>
-          <Button size="sm" variant="light" className="text-slate-500" onPress={() => setCampaignModalOpen(true)}>
-            <CalendarIcon className="w-4 h-4 mr-1" /> Campaigns
-          </Button>
-          <Button
-            size="sm"
-            variant={tiktokConnected ? 'light' : 'bordered'}
-            className={tiktokConnected ? 'text-slate-500' : 'border-slate-900 text-slate-900'}
-            onPress={() => {
-              if (tiktokConnected) {
-                localStorage.removeItem('tiktok_connected');
-                setTiktokConnected(false);
-              } else {
-                localStorage.setItem('tiktok_connected', 'true');
-                setTiktokConnected(true);
-                success('TikTok connected (demo mode)');
-              }
-            }}
-          >
-            {tiktokConnected ? 'TikTok ✓' : 'Connect TikTok'}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Select
+              className="max-w-[130px]"
+              size="sm"
+              aria-label="Filter by platform"
+              selectedKeys={platformFilter ? [platformFilter] : []}
+              onSelectionChange={(keys) => setPlatformFilter(Array.from(keys)[0] as string || '')}
+              items={[{key: '', label: 'All Platforms'}, {key: 'TikTok', label: 'TikTok'}, {key: 'Whatsapp', label: 'WhatsApp'}, {key: 'Instagram', label: 'Instagram'}, {key: 'Facebook', label: 'Facebook'}]}
+            >
+              {(item: any) => <SelectItem key={item.key} textValue={item.label}>{item.label}</SelectItem>}
+            </Select>
+            <Button size="sm" variant="light" className="text-slate-500 h-8 px-2" onPress={() => setCampaignModalOpen(true)}>
+              <CalendarIcon className="w-3.5 h-3.5 mr-1" /> Campaigns
+            </Button>
+          </div>
+          {/* Connection buttons */}
+          <div className="flex items-center gap-1.5">
+            {(['TikTok', 'Whatsapp', 'Facebook'] as const).map((platform) => {
+              const connected = localStorage.getItem(`${platform.toLowerCase()}_connected`) === 'true';
+              const colors: Record<string, string> = {
+                TikTok: connected ? 'bg-slate-900 text-white' : 'border-slate-300 text-slate-600',
+                Whatsapp: connected ? 'bg-emerald-500 text-white' : 'border-emerald-300 text-emerald-600',
+                Facebook: connected ? 'bg-blue-600 text-white' : 'border-blue-300 text-blue-600',
+              };
+              return (
+                <Button
+                  key={platform}
+                  size="sm"
+                  variant={connected ? 'solid' : 'bordered'}
+                  className={`h-7 px-2 text-xs font-medium ${colors[platform]}`}
+                  onPress={() => {
+                    const key = `${platform.toLowerCase()}_connected`;
+                    if (connected) {
+                      localStorage.removeItem(key);
+                    } else {
+                      localStorage.setItem(key, 'true');
+                      success(`${platform} connected (demo mode)`);
+                    }
+                    // Force re-render by toggling a state or just reload
+                    window.location.reload();
+                  }}
+                >
+                  {connected ? `${platform} ✓` : platform}
+                </Button>
+              );
+            })}
+          </div>
         </CardBody>
       </Card>
 
