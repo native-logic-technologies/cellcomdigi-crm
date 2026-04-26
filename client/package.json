@@ -15,6 +15,7 @@
     "@nextui-org/react": "^2.6.11",
     "@types/papaparse": "^5.5.2",
     "cytoscape": "^3.26.0",
+    "cytoscape-fcose": "^2.2.0",
     "framer-motion": "^12.38.0",
     "lucide-react": "^1.8.0",
     "mammoth": "^1.12.0",
