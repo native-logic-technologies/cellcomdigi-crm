@@ -108,7 +108,7 @@ export default function Contacts() {
   // Bulk actions
   const handleBulkDelete = () => {
     if (!db || selectedIds.length === 0) return;
-    (db.reducers as any).bulkDeleteContacts({ idsJson: JSON.stringify(selectedIds) });
+    (db.reducers as any).bulkDeleteContacts({ idsJson: JSON.stringify(selectedIds.map(id => Number(id))) });
     success('Contacts deleted', `${selectedIds.length} contacts removed.`);
     setSelectedKeys(new Set());
     setBulkConfirmOpen(false);
@@ -117,7 +117,7 @@ export default function Contacts() {
   const handleBulkStatusChange = (statusTag: string) => {
     if (!db || selectedIds.length === 0) return;
     (db.reducers as any).bulkUpdateContactStatus({
-      idsJson: JSON.stringify(selectedIds),
+      idsJson: JSON.stringify(selectedIds.map(id => Number(id))),
       status: { tag: statusTag },
     });
     success('Status updated', `${selectedIds.length} contacts set to ${statusTag}.`);
@@ -128,7 +128,7 @@ export default function Contacts() {
     if (!db || selectedIds.length === 0) return;
     const uid = userId === 'none' ? undefined : BigInt(userId);
     (db.reducers as any).bulkUpdateContactAssignedTo({
-      idsJson: JSON.stringify(selectedIds),
+      idsJson: JSON.stringify(selectedIds.map(id => Number(id))),
       assignedTo: uid !== undefined ? { tag: 'some', value: uid } : undefined,
     });
     success('Assignee updated', `${selectedIds.length} contacts reassigned.`);

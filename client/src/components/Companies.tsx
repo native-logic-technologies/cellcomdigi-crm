@@ -99,7 +99,7 @@ export default function Companies() {
 
   const handleBulkDelete = () => {
     if (!db || selectedIds.length === 0) return;
-    (db.reducers as any).bulkDeleteCompanies({ idsJson: JSON.stringify(selectedIds) });
+    (db.reducers as any).bulkDeleteCompanies({ idsJson: JSON.stringify(selectedIds.map(id => Number(id))) });
     success('Companies deleted', `${selectedIds.length} companies removed.`);
     setSelectedKeys(new Set());
     setBulkConfirmOpen(false);
