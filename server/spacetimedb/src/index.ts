@@ -1015,13 +1015,14 @@ export const deleteContact = spacetimedb.reducer(
 export const bulkDeleteContacts = spacetimedb.reducer(
   { ids_json: t.string() },
   (ctx: any, { ids_json }) => {
-    let ids: bigint[];
+    let parsed: number[];
     try {
-      ids = JSON.parse(ids_json);
+      parsed = JSON.parse(ids_json);
     } catch (_e) {
       throw new Error('Invalid JSON in ids_json');
     }
-    if (!Array.isArray(ids) || ids.length === 0) throw new Error('ids_json must be a non-empty array');
+    if (!Array.isArray(parsed) || parsed.length === 0) throw new Error('ids_json must be a non-empty array');
+    const ids = parsed.map((id) => BigInt(id));
 
     for (const id of ids) {
       const contact = ctx.db.contacts.id.find(id);
@@ -1036,13 +1037,14 @@ export const bulkDeleteContacts = spacetimedb.reducer(
 export const bulkUpdateContactStatus = spacetimedb.reducer(
   { ids_json: t.string(), status: contactStatus },
   (ctx: any, { ids_json, status }) => {
-    let ids: bigint[];
+    let parsed: number[];
     try {
-      ids = JSON.parse(ids_json);
+      parsed = JSON.parse(ids_json);
     } catch (_e) {
       throw new Error('Invalid JSON in ids_json');
     }
-    if (!Array.isArray(ids) || ids.length === 0) throw new Error('ids_json must be a non-empty array');
+    if (!Array.isArray(parsed) || parsed.length === 0) throw new Error('ids_json must be a non-empty array');
+    const ids = parsed.map((id) => BigInt(id));
 
     for (const id of ids) {
       const contact = ctx.db.contacts.id.find(id);
@@ -1063,13 +1065,14 @@ export const bulkUpdateContactStatus = spacetimedb.reducer(
 export const bulkUpdateContactAssignedTo = spacetimedb.reducer(
   { ids_json: t.string(), assigned_to: t.option(t.u64()) },
   (ctx: any, { ids_json, assigned_to }) => {
-    let ids: bigint[];
+    let parsed: number[];
     try {
-      ids = JSON.parse(ids_json);
+      parsed = JSON.parse(ids_json);
     } catch (_e) {
       throw new Error('Invalid JSON in ids_json');
     }
-    if (!Array.isArray(ids) || ids.length === 0) throw new Error('ids_json must be a non-empty array');
+    if (!Array.isArray(parsed) || parsed.length === 0) throw new Error('ids_json must be a non-empty array');
+    const ids = parsed.map((id) => BigInt(id));
 
     for (const id of ids) {
       const contact = ctx.db.contacts.id.find(id);
@@ -1322,13 +1325,14 @@ export const deleteCompany = spacetimedb.reducer(
 export const bulkDeleteCompanies = spacetimedb.reducer(
   { ids_json: t.string() },
   (ctx: any, { ids_json }) => {
-    let ids: bigint[];
+    let parsed: number[];
     try {
-      ids = JSON.parse(ids_json);
+      parsed = JSON.parse(ids_json);
     } catch (_e) {
       throw new Error('Invalid JSON in ids_json');
     }
-    if (!Array.isArray(ids) || ids.length === 0) throw new Error('ids_json must be a non-empty array');
+    if (!Array.isArray(parsed) || parsed.length === 0) throw new Error('ids_json must be a non-empty array');
+    const ids = parsed.map((id) => BigInt(id));
 
     for (const id of ids) {
       const company = ctx.db.companies.id.find(id);

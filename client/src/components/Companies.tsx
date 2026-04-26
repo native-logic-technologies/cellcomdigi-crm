@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Search, Pencil, Trash2, Eye, Phone, Mail, Globe, StickyNote, X } from 'lucide-react';
 import { useTable, useDb } from '../spacetime/hooks';
 import { useToast } from '../hooks/useToast';
+import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import PageHeader from './PageHeader';
 import ConfirmDialog from './ConfirmDialog';
 import CompanyDrawer from './CompanyDrawer';
@@ -36,6 +37,9 @@ export default function Companies() {
       || (c.email ?? '').toLowerCase().includes(q)
       || (c.phone ?? '').toLowerCase().includes(q);
   });
+
+  const { displayCount, sentinelRef } = useInfiniteScroll(filtered.length);
+  const visibleCompanies = filtered.slice(0, displayCount);
 
   const selectedCount = selectedKeys.size;
   const selectedIds = Array.from(selectedKeys).map(id => BigInt(id));
@@ -161,7 +165,7 @@ export default function Companies() {
               <TableColumn className="text-right">ACTIONS</TableColumn>
             </TableHeader>
             <TableBody emptyContent="No companies found">
-              {filtered.map((c: any) => (
+              {visibleCompanies.map((c: any) => (
                 <TableRow key={c.id.toString()} className="hover:bg-slate-50/60 transition-colors">
                   <TableCell>
                     <div className="flex items-center gap-3">
@@ -197,6 +201,11 @@ export default function Companies() {
               ))}
             </TableBody>
           </Table>
+          {displayCount < filtered.length && (
+            <div ref={sentinelRef} className="py-4 text-center text-xs text-slate-400">
+              Loading more… ({displayCount} of {filtered.length})
+            </div>
+          )}
         </CardBody>
       </Card>
 

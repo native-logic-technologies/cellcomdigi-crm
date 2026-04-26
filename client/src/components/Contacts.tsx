@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Search, Pencil, Trash2, Eye, Upload, X, Users, Tag } from 'lucide-react';
 import { useTable, useDb } from '../spacetime/hooks';
 import { useToast } from '../hooks/useToast';
+import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import PageHeader from './PageHeader';
 import ConfirmDialog from './ConfirmDialog';
 import ContactDrawer from './ContactDrawer';
@@ -49,6 +50,9 @@ export default function Contacts() {
     const matchesStatus = !statusFilter || c.status?.tag === statusFilter;
     return matchesSearch && matchesStatus;
   });
+
+  const { displayCount, sentinelRef } = useInfiniteScroll(filtered.length);
+  const visibleContacts = filtered.slice(0, displayCount);
 
   const selectedCount = selectedKeys.size;
   const selectedIds = Array.from(selectedKeys).map(id => BigInt(id));
@@ -253,7 +257,7 @@ export default function Contacts() {
               <TableColumn className="text-right">ACTIONS</TableColumn>
             </TableHeader>
             <TableBody emptyContent="No contacts found">
-              {filtered.map((c: any) => (
+              {visibleContacts.map((c: any) => (
                 <TableRow key={c.id.toString()} className="hover:bg-slate-50/60 transition-colors">
                   <TableCell>
                     <button
@@ -292,6 +296,11 @@ export default function Contacts() {
               ))}
             </TableBody>
           </Table>
+          {displayCount < filtered.length && (
+            <div ref={sentinelRef} className="py-4 text-center text-xs text-slate-400">
+              Loading more… ({displayCount} of {filtered.length})
+            </div>
+          )}
         </CardBody>
       </Card>
 

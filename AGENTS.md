@@ -264,3 +264,5 @@ There is **no test framework** currently configured in this project. If you add 
 5. **Currency is in cents.** Divide by 100 and format when displaying to users.
 6. **The KG does not replace operational tables.** Always mutate operational tables via reducers; the KG syncs automatically.
 7. **No traditional REST API for the client.** All client data access goes through SpacetimeDB subscriptions and reducers. The API Gateway (`server/api/`) provides a REST interface for external AI agents only.
+8. **BigInt and JSON.stringify do NOT mix.** `JSON.stringify([1n, 2n])` throws `TypeError`. When passing arrays of record IDs through JSON strings to bulk reducers, always convert to `Number` on the client (`ids.map(id => Number(id))`) and convert back to `BigInt` on the server (`parsed.map(id => BigInt(id))`). SpacetimeDB `u64` primary keys are bigint in memory but JSON.parse returns plain numbers.
+9. **Lazy-load large tables.** The client subscribes to all rows, but rendering 600+ rows in a NextUI Table causes slow initial paint. Use an IntersectionObserver sentinel to render in chunks of 50.
