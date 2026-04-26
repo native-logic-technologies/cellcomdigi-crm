@@ -1009,6 +1009,102 @@ export const deleteContact = spacetimedb.reducer(
 );
 
 // ---------------------------------------------------------------------------
+// Bulk contact operations
+// ---------------------------------------------------------------------------
+
+export const bulkDeleteContacts = spacetimedb.reducer(
+  { ids_json: t.string() },
+  (ctx: any, { ids_json }) => {
+    let ids: bigint[];
+    try {
+      ids = JSON.parse(ids_json);
+    } catch (_e) {
+      throw new Error('Invalid JSON in ids_json');
+    }
+    if (!Array.isArray(ids) || ids.length === 0) throw new Error('ids_json must be a non-empty array');
+
+    for (const id of ids) {
+      const contact = ctx.db.contacts.id.find(id);
+      if (!contact) continue;
+      requireTenant(ctx, contact.tenant_id);
+      deleteKgVertex(ctx, 'contacts', id);
+      ctx.db.contacts.id.delete(id);
+    }
+  }
+);
+
+export const bulkUpdateContactStatus = spacetimedb.reducer(
+  { ids_json: t.string(), status: contactStatus },
+  (ctx: any, { ids_json, status }) => {
+    let ids: bigint[];
+    try {
+      ids = JSON.parse(ids_json);
+    } catch (_e) {
+      throw new Error('Invalid JSON in ids_json');
+    }
+    if (!Array.isArray(ids) || ids.length === 0) throw new Error('ids_json must be a non-empty array');
+
+    for (const id of ids) {
+      const contact = ctx.db.contacts.id.find(id);
+      if (!contact) continue;
+      requireTenant(ctx, contact.tenant_id);
+      ctx.db.contacts.id.update({
+        ...contact,
+        status,
+        updated_at: ctx.timestamp,
+      });
+      syncKgVertex(ctx, contact.tenant_id, { tag: 'Contact' }, 'contacts', id, {
+        email: contact.email, phone: contact.phone, name: contact.name, status: status.tag,
+      });
+    }
+  }
+);
+
+export const bulkUpdateContactAssignedTo = spacetimedb.reducer(
+  { ids_json: t.string(), assigned_to: t.option(t.u64()) },
+  (ctx: any, { ids_json, assigned_to }) => {
+    let ids: bigint[];
+    try {
+      ids = JSON.parse(ids_json);
+    } catch (_e) {
+      throw new Error('Invalid JSON in ids_json');
+    }
+    if (!Array.isArray(ids) || ids.length === 0) throw new Error('ids_json must be a non-empty array');
+
+    for (const id of ids) {
+      const contact = ctx.db.contacts.id.find(id);
+      if (!contact) continue;
+      requireTenant(ctx, contact.tenant_id);
+      ctx.db.contacts.id.update({
+        ...contact,
+        assigned_to,
+        updated_at: ctx.timestamp,
+      });
+      syncKgVertex(ctx, contact.tenant_id, { tag: 'Contact' }, 'contacts', id, {
+        email: contact.email, phone: contact.phone, name: contact.name, status: contact.status.tag,
+      });
+
+      const contactVertexId = findKgVertexId(ctx, contact.tenant_id, 'contacts', id);
+      if (contactVertexId) {
+        // Remove old AssignedTo edges
+        for (const e of ctx.db.kg_edge.iter()) {
+          if (e.source_vertex_id === contactVertexId && e.relation_type.tag === 'AssignedTo') {
+            ctx.db.kg_edge.id.delete(e.id);
+          }
+        }
+        // Create new edge if assigned
+        if (assigned_to !== undefined) {
+          const userVertexId = findKgVertexId(ctx, contact.tenant_id, 'users', assigned_to);
+          if (userVertexId) {
+            syncKgEdge(ctx, contact.tenant_id, contactVertexId, userVertexId, { tag: 'AssignedTo' });
+          }
+        }
+      }
+    }
+  }
+);
+
+// ---------------------------------------------------------------------------
 // Bulk import contacts from CSV
 // ---------------------------------------------------------------------------
 
@@ -1216,6 +1312,31 @@ export const deleteCompany = spacetimedb.reducer(
     requireTenant(ctx, company.tenant_id);
     deleteKgVertex(ctx, 'companies', id);
     ctx.db.companies.id.delete(id);
+  }
+);
+
+// ---------------------------------------------------------------------------
+// Bulk company operations
+// ---------------------------------------------------------------------------
+
+export const bulkDeleteCompanies = spacetimedb.reducer(
+  { ids_json: t.string() },
+  (ctx: any, { ids_json }) => {
+    let ids: bigint[];
+    try {
+      ids = JSON.parse(ids_json);
+    } catch (_e) {
+      throw new Error('Invalid JSON in ids_json');
+    }
+    if (!Array.isArray(ids) || ids.length === 0) throw new Error('ids_json must be a non-empty array');
+
+    for (const id of ids) {
+      const company = ctx.db.companies.id.find(id);
+      if (!company) continue;
+      requireTenant(ctx, company.tenant_id);
+      deleteKgVertex(ctx, 'companies', id);
+      ctx.db.companies.id.delete(id);
+    }
   }
 );
 

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, Pencil, Trash2, Eye, Upload } from 'lucide-react';
+import { Search, Pencil, Trash2, Eye, Upload, X, Users, Tag } from 'lucide-react';
 import { useTable, useDb } from '../spacetime/hooks';
 import { useToast } from '../hooks/useToast';
 import PageHeader from './PageHeader';
@@ -9,7 +9,7 @@ import CsvImportModal from './CsvImportModal';
 import {
   Button, Input, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter,
   Table, TableHeader, TableColumn, TableBody, TableRow, TableCell,
-  Badge, Card, CardBody, Avatar, Select, SelectItem
+  Badge, Card, CardBody, Avatar, Select, SelectItem, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem
 } from '@nextui-org/react';
 
 const statusOptions = ['Lead', 'Prospect', 'Customer', 'Churned'];
@@ -23,6 +23,7 @@ export default function Contacts() {
   const { success } = useToast();
   const [contacts] = useTable('contacts');
   const [companies] = useTable('companies');
+  const [users] = useTable('users');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [modalOpen, setModalOpen] = useState(false);
@@ -31,6 +32,8 @@ export default function Contacts() {
   const [deletingId, setDeletingId] = useState<bigint | null>(null);
   const [drawerContact, setDrawerContact] = useState<any | null>(null);
   const [csvImportOpen, setCsvImportOpen] = useState(false);
+  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
+  const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false);
   const [form, setForm] = useState({
     name: '', email: '', phone: '', companyId: '', status: 'Lead', source: 'Manual',
   });
@@ -46,6 +49,9 @@ export default function Contacts() {
     const matchesStatus = !statusFilter || c.status?.tag === statusFilter;
     return matchesSearch && matchesStatus;
   });
+
+  const selectedCount = selectedKeys.size;
+  const selectedIds = Array.from(selectedKeys).map(id => BigInt(id));
 
   const openCreate = () => {
     setEditing(null);
@@ -99,6 +105,36 @@ export default function Contacts() {
     setDeletingId(null);
   };
 
+  // Bulk actions
+  const handleBulkDelete = () => {
+    if (!db || selectedIds.length === 0) return;
+    (db.reducers as any).bulkDeleteContacts({ idsJson: JSON.stringify(selectedIds) });
+    success('Contacts deleted', `${selectedIds.length} contacts removed.`);
+    setSelectedKeys(new Set());
+    setBulkConfirmOpen(false);
+  };
+
+  const handleBulkStatusChange = (statusTag: string) => {
+    if (!db || selectedIds.length === 0) return;
+    (db.reducers as any).bulkUpdateContactStatus({
+      idsJson: JSON.stringify(selectedIds),
+      status: { tag: statusTag },
+    });
+    success('Status updated', `${selectedIds.length} contacts set to ${statusTag}.`);
+    setSelectedKeys(new Set());
+  };
+
+  const handleBulkAssign = (userId: string) => {
+    if (!db || selectedIds.length === 0) return;
+    const uid = userId === 'none' ? undefined : BigInt(userId);
+    (db.reducers as any).bulkUpdateContactAssignedTo({
+      idsJson: JSON.stringify(selectedIds),
+      assignedTo: uid !== undefined ? { tag: 'some', value: uid } : undefined,
+    });
+    success('Assignee updated', `${selectedIds.length} contacts reassigned.`);
+    setSelectedKeys(new Set());
+  };
+
   return (
     <div className="space-y-5 max-w-7xl mx-auto animate-fade-in">
       <PageHeader
@@ -143,8 +179,70 @@ export default function Contacts() {
       </Card>
 
       <Card className="border border-slate-100 shadow-sm">
+        {/* Bulk action bar */}
+        {selectedCount > 0 && (
+          <div className="flex items-center justify-between px-4 py-3 bg-brand-50 border-b border-brand-100">
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium text-brand-700">
+                {selectedCount} selected
+              </span>
+              <Button size="sm" variant="light" className="text-brand-600 h-7" onPress={() => setSelectedKeys(new Set())}>
+                <X className="w-3.5 h-3.5 mr-1" /> Clear
+              </Button>
+            </div>
+            <div className="flex items-center gap-2">
+              <Dropdown>
+                <DropdownTrigger>
+                  <Button size="sm" variant="flat" startContent={<Tag className="w-3.5 h-3.5" />} className="h-8">
+                    Change Status
+                  </Button>
+                </DropdownTrigger>
+                <DropdownMenu
+                  aria-label="Change status"
+                  items={statusOptions.map(s => ({key: s, label: s}))}
+                  onAction={(key) => handleBulkStatusChange(key as string)}
+                >
+                  {(item: any) => <DropdownItem key={item.key}>{item.label}</DropdownItem>}
+                </DropdownMenu>
+              </Dropdown>
+
+              <Dropdown>
+                <DropdownTrigger>
+                  <Button size="sm" variant="flat" startContent={<Users className="w-3.5 h-3.5" />} className="h-8">
+                    Assign To
+                  </Button>
+                </DropdownTrigger>
+                <DropdownMenu
+                  aria-label="Assign to"
+                  items={[{key: 'none', label: 'Unassigned'}, ...users.map((u: any) => ({key: u.id.toString(), label: u.name}))]}
+                  onAction={(key) => handleBulkAssign(key as string)}
+                >
+                  {(item: any) => <DropdownItem key={item.key}>{item.label}</DropdownItem>}
+                </DropdownMenu>
+              </Dropdown>
+
+              <Button size="sm" color="danger" variant="flat" startContent={<Trash2 className="w-3.5 h-3.5" />} className="h-8" onPress={() => setBulkConfirmOpen(true)}>
+                Delete
+              </Button>
+            </div>
+          </div>
+        )}
+
         <CardBody className="p-0">
-          <Table removeWrapper aria-label="Contacts table" classNames={{ th: 'bg-slate-50 text-slate-500 text-xs font-semibold uppercase tracking-wider', td: 'py-3' }}>
+          <Table
+            removeWrapper
+            aria-label="Contacts table"
+            selectionMode="multiple"
+            selectedKeys={selectedKeys}
+            onSelectionChange={(keys) => {
+              if (keys === 'all') {
+                setSelectedKeys(new Set(filtered.map((c: any) => c.id.toString())));
+              } else {
+                setSelectedKeys(new Set(Array.from(keys as Set<string>)));
+              }
+            }}
+            classNames={{ th: 'bg-slate-50 text-slate-500 text-xs font-semibold uppercase tracking-wider', td: 'py-3' }}
+          >
             <TableHeader>
               <TableColumn>NAME</TableColumn>
               <TableColumn>EMAIL</TableColumn>
@@ -232,6 +330,15 @@ export default function Contacts() {
         title="Delete contact?"
         description="This will permanently remove the contact from your CRM."
         confirmLabel="Delete"
+      />
+
+      <ConfirmDialog
+        isOpen={bulkConfirmOpen}
+        onClose={() => setBulkConfirmOpen(false)}
+        onConfirm={handleBulkDelete}
+        title={`Delete ${selectedCount} contacts?`}
+        description="This will permanently remove all selected contacts from your CRM. This action cannot be undone."
+        confirmLabel="Delete All"
       />
 
       {drawerContact && <ContactDrawer contact={drawerContact} onClose={() => setDrawerContact(null)} />}

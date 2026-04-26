@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, Pencil, Trash2, Eye, Phone, Mail, Globe, StickyNote } from 'lucide-react';
+import { Search, Pencil, Trash2, Eye, Phone, Mail, Globe, StickyNote, X } from 'lucide-react';
 import { useTable, useDb } from '../spacetime/hooks';
 import { useToast } from '../hooks/useToast';
 import PageHeader from './PageHeader';
@@ -21,6 +21,8 @@ export default function Companies() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<bigint | null>(null);
   const [drawerCompany, setDrawerCompany] = useState<any | null>(null);
+  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
+  const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false);
   const [form, setForm] = useState({
     name: '', registrationNumber: '', industry: '',
     phone: '', email: '', website: '',
@@ -34,6 +36,9 @@ export default function Companies() {
       || (c.email ?? '').toLowerCase().includes(q)
       || (c.phone ?? '').toLowerCase().includes(q);
   });
+
+  const selectedCount = selectedKeys.size;
+  const selectedIds = Array.from(selectedKeys).map(id => BigInt(id));
 
   const openCreate = () => {
     setEditing(null);
@@ -92,6 +97,14 @@ export default function Companies() {
     setDeletingId(null);
   };
 
+  const handleBulkDelete = () => {
+    if (!db || selectedIds.length === 0) return;
+    (db.reducers as any).bulkDeleteCompanies({ idsJson: JSON.stringify(selectedIds) });
+    success('Companies deleted', `${selectedIds.length} companies removed.`);
+    setSelectedKeys(new Set());
+    setBulkConfirmOpen(false);
+  };
+
   return (
     <div className="space-y-5 max-w-7xl mx-auto animate-fade-in">
       <PageHeader title="Companies" subtitle="Manage your business accounts" actionLabel="Add Company" onAction={openCreate} />
@@ -109,8 +122,37 @@ export default function Companies() {
       </Card>
 
       <Card className="border border-slate-100 shadow-sm">
+        {selectedCount > 0 && (
+          <div className="flex items-center justify-between px-4 py-3 bg-brand-50 border-b border-brand-100">
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium text-brand-700">
+                {selectedCount} selected
+              </span>
+              <Button size="sm" variant="light" className="text-brand-600 h-7" onPress={() => setSelectedKeys(new Set())}>
+                <X className="w-3.5 h-3.5 mr-1" /> Clear
+              </Button>
+            </div>
+            <Button size="sm" color="danger" variant="flat" startContent={<Trash2 className="w-3.5 h-3.5" />} className="h-8" onPress={() => setBulkConfirmOpen(true)}>
+              Delete
+            </Button>
+          </div>
+        )}
+
         <CardBody className="p-0">
-          <Table removeWrapper aria-label="Companies table" classNames={{ th: 'bg-slate-50 text-slate-500 text-xs font-semibold uppercase tracking-wider', td: 'py-3' }}>
+          <Table
+            removeWrapper
+            aria-label="Companies table"
+            selectionMode="multiple"
+            selectedKeys={selectedKeys}
+            onSelectionChange={(keys) => {
+              if (keys === 'all') {
+                setSelectedKeys(new Set(filtered.map((c: any) => c.id.toString())));
+              } else {
+                setSelectedKeys(new Set(Array.from(keys as Set<string>)));
+              }
+            }}
+            classNames={{ th: 'bg-slate-50 text-slate-500 text-xs font-semibold uppercase tracking-wider', td: 'py-3' }}
+          >
             <TableHeader>
               <TableColumn>NAME</TableColumn>
               <TableColumn>REG. NUMBER</TableColumn>
@@ -186,6 +228,15 @@ export default function Companies() {
       </Modal>
 
       <ConfirmDialog isOpen={confirmOpen} onClose={() => setConfirmOpen(false)} onConfirm={remove} title="Delete company?" description="This will permanently remove the company and unlink related contacts." confirmLabel="Delete" />
+
+      <ConfirmDialog
+        isOpen={bulkConfirmOpen}
+        onClose={() => setBulkConfirmOpen(false)}
+        onConfirm={handleBulkDelete}
+        title={`Delete ${selectedCount} companies?`}
+        description="This will permanently remove all selected companies from your CRM. This action cannot be undone."
+        confirmLabel="Delete All"
+      />
 
       {drawerCompany && <CompanyDrawer company={drawerCompany} onClose={() => setDrawerCompany(null)} />}
     </div>

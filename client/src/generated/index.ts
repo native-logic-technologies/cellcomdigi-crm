@@ -39,7 +39,11 @@ import AddTenantMemberReducer from "./add_tenant_member_reducer";
 import AddToCollectionReducer from "./add_to_collection_reducer";
 import ArchiveConversationReducer from "./archive_conversation_reducer";
 import BroadcastWhatsAppReducer from "./broadcast_whats_app_reducer";
+import BulkDeleteCompaniesReducer from "./bulk_delete_companies_reducer";
+import BulkDeleteContactsReducer from "./bulk_delete_contacts_reducer";
 import BulkImportContactsReducer from "./bulk_import_contacts_reducer";
+import BulkUpdateContactAssignedToReducer from "./bulk_update_contact_assigned_to_reducer";
+import BulkUpdateContactStatusReducer from "./bulk_update_contact_status_reducer";
 import CreateActivityReducer from "./create_activity_reducer";
 import CreateAiInsightReducer from "./create_ai_insight_reducer";
 import CreateCollectionReducer from "./create_collection_reducer";
@@ -596,7 +600,11 @@ const reducersSchema = __reducers(
   __reducerSchema("add_to_collection", AddToCollectionReducer),
   __reducerSchema("archive_conversation", ArchiveConversationReducer),
   __reducerSchema("broadcast_whats_app", BroadcastWhatsAppReducer),
+  __reducerSchema("bulk_delete_companies", BulkDeleteCompaniesReducer),
+  __reducerSchema("bulk_delete_contacts", BulkDeleteContactsReducer),
   __reducerSchema("bulk_import_contacts", BulkImportContactsReducer),
+  __reducerSchema("bulk_update_contact_assigned_to", BulkUpdateContactAssignedToReducer),
+  __reducerSchema("bulk_update_contact_status", BulkUpdateContactStatusReducer),
   __reducerSchema("create_activity", CreateActivityReducer),
   __reducerSchema("create_ai_insight", CreateAiInsightReducer),
   __reducerSchema("create_collection", CreateCollectionReducer),
