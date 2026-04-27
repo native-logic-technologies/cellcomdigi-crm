@@ -28,7 +28,7 @@ function buildSystemPrompt(context: SocialContext): string {
 
   return `You are a Malaysian social media strategist who creates high-performing content for SMEs.
 
-SUPERMEMORY GRAPH CONTEXT:
+MEMORY GRAPH CONTEXT:
 ${context.graphContext || 'No detailed context available.'}
 
 BUSINESS CONTEXT:

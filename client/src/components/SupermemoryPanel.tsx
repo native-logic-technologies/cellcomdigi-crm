@@ -78,7 +78,7 @@ export default function SupermemoryPanel({ tenantId, entityTable, entityId, webs
   if (!isReady) {
     return (
       <div className="flex items-center justify-center py-12 text-slate-400 text-sm">
-        <Sparkles className="w-4 h-4 animate-spin mr-2" /> Loading Supermemory...
+        <Sparkles className="w-4 h-4 animate-spin mr-2" /> Loading Memory...
       </div>
     );
   }
@@ -89,7 +89,7 @@ export default function SupermemoryPanel({ tenantId, entityTable, entityId, webs
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Brain className="w-5 h-5 text-brand-600" />
-          <h3 className="text-sm font-semibold text-slate-800">Supermemory Intelligence</h3>
+          <h3 className="text-sm font-semibold text-slate-800">Memory Intelligence</h3>
         </div>
         <div className="flex gap-2">
           {websiteUrl && (

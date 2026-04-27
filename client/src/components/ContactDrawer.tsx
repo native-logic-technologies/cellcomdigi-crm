@@ -267,7 +267,7 @@ export default function ContactDrawer({ contact, onClose }: ContactDrawerProps) 
 
             <Tab key="supermemory" title={
               <span className="flex items-center gap-1">
-                <Brain className="w-3.5 h-3.5" /> Supermemory
+                <Brain className="w-3.5 h-3.5" /> Memory
               </span>
             }>
               <div className="px-6 py-4">

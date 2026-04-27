@@ -1,5 +1,5 @@
 // AI AI — Hyper-Personalised Email Reply Generation
-// Uses Supermemory graph context for deeply personalised replies
+// Uses Memory graph context for deeply personalised replies
 
 const API_URL = 'https://api.inceptionlabs.ai/v1/chat/completions';
 const MODEL = 'mercury-2';

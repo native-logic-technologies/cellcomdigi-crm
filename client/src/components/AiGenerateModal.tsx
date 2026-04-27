@@ -36,7 +36,7 @@ export default function AiGenerateModal({ isOpen, onClose, onAccept }: AiGenerat
     setGenerated([]);
     setSelectedIndices(new Set());
     try {
-      // Build supermemory context from first company (or generic)
+      // Build memory context from first company (or generic)
       let graphContext = '';
       if (companies.length > 0) {
         try {
@@ -157,7 +157,7 @@ export default function AiGenerateModal({ isOpen, onClose, onAccept }: AiGenerat
             </Button>
             {lastGraphContext && (
               <Badge variant="flat" size="sm" className="bg-brand-50 text-brand-700 border border-brand-200">
-                <Brain className="w-3 h-3 mr-1" /> Supermemory
+                <Brain className="w-3 h-3 mr-1" /> Memory
               </Badge>
             )}
           </div>

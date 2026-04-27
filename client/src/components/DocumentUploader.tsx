@@ -147,7 +147,7 @@ export default function DocumentUploader({ tenantId, targetEntityTable, targetEn
             isDisabled={status === 'extracting' || status === 'uploading'}
             className="w-full"
           >
-            {status === 'extracting' ? 'Extracting text...' : status === 'uploading' ? 'Saving to graph...' : 'Upload to Supermemory'}
+            {status === 'extracting' ? 'Extracting text...' : status === 'uploading' ? 'Saving to graph...' : 'Upload to Memory'};
           </Button>
         </div>
       )}
