@@ -6,6 +6,7 @@ import {
 import { TrendingUp, Clock, Target, DollarSign, type LucideIcon } from 'lucide-react';
 import { useTable } from '../spacetime/hooks';
 import { Card, CardBody } from '@nextui-org/react';
+import { useLanguage } from '../i18n/LanguageContext';
 import PageHeader from './PageHeader';
 import StatCard from './StatCard';
 
@@ -16,6 +17,7 @@ function formatRM(cents: number) {
 }
 
 export default function Analytics() {
+  const { t } = useLanguage();
   const [deals] = useTable('deals');
   const [stages] = useTable('pipeline_stages');
   const [stageHistory] = useTable('deal_stage_history');
@@ -83,7 +85,7 @@ export default function Analytics() {
 
   return (
     <div className="space-y-5 max-w-7xl mx-auto animate-fade-in">
-      <PageHeader title="Analytics" subtitle="Pipeline performance and conversion metrics" />
+      <PageHeader title={t('analytics.title')} subtitle={t('analytics.subtitle')} />
 
       {/* Stats row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -124,7 +126,7 @@ export default function Analytics() {
           <CardBody className="p-5">
             <h3 className="text-sm font-semibold text-slate-800 mb-4">Pipeline Value by Stage</h3>
             <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <BarChart data={stageData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                   <XAxis dataKey="name" tick={{ fontSize: 12 }} />
@@ -145,7 +147,7 @@ export default function Analytics() {
           <CardBody className="p-5">
             <h3 className="text-sm font-semibold text-slate-800 mb-4">Deal Count by Stage</h3>
             <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <BarChart data={stageData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                   <XAxis dataKey="name" tick={{ fontSize: 12 }} />
@@ -168,7 +170,7 @@ export default function Analytics() {
               {funnelData.length === 0 ? (
                 <div className="flex items-center justify-center h-full text-slate-400 text-sm">No deal data</div>
               ) : (
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                   <PieChart>
                     <Pie
                       data={funnelData}
@@ -200,7 +202,7 @@ export default function Analytics() {
               {velocityData.length === 0 ? (
                 <div className="flex items-center justify-center h-full text-slate-400 text-sm">No stage movements yet</div>
               ) : (
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                   <LineChart data={velocityData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                     <XAxis dataKey="name" tick={{ fontSize: 12 }} />
@@ -224,7 +226,7 @@ export default function Analytics() {
               {sourceData.length === 0 ? (
                 <div className="flex items-center justify-center h-full text-slate-400 text-sm">No contact data</div>
               ) : (
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                   <BarChart data={sourceData} layout="vertical">
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                     <XAxis type="number" tick={{ fontSize: 12 }} allowDecimals={false} />

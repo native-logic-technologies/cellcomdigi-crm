@@ -1,16 +1,27 @@
 import { useState, useEffect } from 'react';
-import { User, Building2, Phone, Globe, Briefcase, FileText, Save } from 'lucide-react';
+import { User, Building2, Phone, Globe, Briefcase, FileText, Save, Moon, Sun, Languages } from 'lucide-react';
 import { useTable, useDb } from '../spacetime/hooks';
 import { useToast } from '../hooks/useToast';
+import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../i18n/LanguageContext';
+import type { Lang } from '../i18n/dictionary';
 import PageHeader from './PageHeader';
 import {
   Card, CardBody, Button, Input, Textarea, Tabs, Tab,
-  Avatar, Badge
+  Avatar, Badge, Switch
 } from '@nextui-org/react';
+
+const LANG_OPTIONS: { value: Lang; label: string; native: string }[] = [
+  { value: 'en', label: 'English', native: 'English' },
+  { value: 'ms', label: 'Bahasa Melayu', native: 'Bahasa Melayu' },
+  { value: 'zh', label: 'Chinese', native: '中文' },
+];
 
 export default function Settings() {
   const db = useDb();
   const { success } = useToast();
+  const { darkMode, toggleDarkMode } = useTheme();
+  const { t, lang, setLang } = useLanguage();
   const [users] = useTable('users');
   const [companies] = useTable('companies');
 
@@ -76,7 +87,7 @@ export default function Settings() {
 
   return (
     <div className="space-y-5 max-w-4xl mx-auto animate-fade-in">
-      <PageHeader title="Settings" subtitle="Manage your profile and company information" />
+      <PageHeader title={t('settings.title')} subtitle={t('settings.subtitle')} />
 
       <Tabs
         aria-label="Settings tabs"
@@ -88,7 +99,7 @@ export default function Settings() {
           panel: 'px-0 py-4',
         }}
       >
-        <Tab key="profile" title={<span className="flex items-center gap-2"><User className="w-4 h-4" /> Profile</span>}>
+        <Tab key="profile" title={<span className="flex items-center gap-2"><User className="w-4 h-4" /> {t('settings.profile')}</span>}>
           <Card className="border border-slate-100 shadow-sm">
             <CardBody className="p-6 space-y-6">
               <div className="flex items-center gap-4">
@@ -105,13 +116,13 @@ export default function Settings() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Input
-                  label="Full Name"
+                  label={t('contacts.name')}
                   value={profileForm.name}
                   onValueChange={(v) => setProfileForm({ ...profileForm, name: v })}
                   startContent={<User className="w-4 h-4 text-slate-400" />}
                 />
                 <Input
-                  label="Email"
+                  label={t('contacts.email')}
                   type="email"
                   value={profileForm.email}
                   onValueChange={(v) => setProfileForm({ ...profileForm, email: v })}
@@ -121,14 +132,14 @@ export default function Settings() {
 
               <div className="flex justify-end">
                 <Button color="primary" className="bg-brand-600" startContent={<Save className="w-4 h-4" />} onPress={saveProfile}>
-                  Save Profile
+                  {t('common.save')}
                 </Button>
               </div>
             </CardBody>
           </Card>
         </Tab>
 
-        <Tab key="company" title={<span className="flex items-center gap-2"><Building2 className="w-4 h-4" /> Company</span>}>
+        <Tab key="company" title={<span className="flex items-center gap-2"><Building2 className="w-4 h-4" /> {t('settings.company')}</span>}>
           <Card className="border border-slate-100 shadow-sm">
             <CardBody className="p-6 space-y-6">
               <div className="flex items-center gap-4">
@@ -143,25 +154,25 @@ export default function Settings() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Input
-                  label="Company Name"
+                  label={t('settings.company')}
                   value={companyForm.name}
                   onValueChange={(v) => setCompanyForm({ ...companyForm, name: v })}
                   startContent={<Building2 className="w-4 h-4 text-slate-400" />}
                 />
                 <Input
-                  label="Industry"
+                  label={t('contacts.status')}
                   value={companyForm.industry}
                   onValueChange={(v) => setCompanyForm({ ...companyForm, industry: v })}
                   startContent={<Briefcase className="w-4 h-4 text-slate-400" />}
                 />
                 <Input
-                  label="Phone Number"
+                  label={t('contacts.phone')}
                   value={companyForm.phone}
                   onValueChange={(v) => setCompanyForm({ ...companyForm, phone: v })}
                   startContent={<Phone className="w-4 h-4 text-slate-400" />}
                 />
                 <Input
-                  label="Email"
+                  label={t('contacts.email')}
                   type="email"
                   value={companyForm.email}
                   onValueChange={(v) => setCompanyForm({ ...companyForm, email: v })}
@@ -185,8 +196,63 @@ export default function Settings() {
 
               <div className="flex justify-end">
                 <Button color="primary" className="bg-brand-600" startContent={<Save className="w-4 h-4" />} onPress={saveCompany}>
-                  Save Company Profile
+                  {t('common.save')}
                 </Button>
+              </div>
+            </CardBody>
+          </Card>
+        </Tab>
+
+        <Tab key="appearance" title={<span className="flex items-center gap-2"><Languages className="w-4 h-4" /> {t('settings.appearance')}</span>}>
+          <Card className="border border-slate-100 shadow-sm">
+            <CardBody className="p-6 space-y-8">
+              {/* Language */}
+              <div>
+                <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2 mb-4">
+                  <Globe className="w-4 h-4 text-brand-600" />
+                  {t('settings.language')}
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {LANG_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => setLang(opt.value)}
+                      className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
+                        lang === opt.value
+                          ? 'border-brand-600 bg-brand-50 text-brand-700'
+                          : 'border-slate-100 bg-white text-slate-600 hover:border-slate-200'
+                      }`}
+                    >
+                      <span className="text-lg font-semibold">{opt.native}</span>
+                      <span className="text-xs">{opt.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Dark Mode */}
+              <div>
+                <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2 mb-4">
+                  {darkMode ? <Moon className="w-4 h-4 text-brand-600" /> : <Sun className="w-4 h-4 text-brand-600" />}
+                  {t('settings.darkMode')}
+                </h3>
+                <div className="flex items-center justify-between p-4 rounded-xl border border-slate-100 bg-white">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-lg ${darkMode ? 'bg-slate-800 text-slate-200' : 'bg-amber-50 text-amber-600'}`}>
+                      {darkMode ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-slate-700">{darkMode ? t('settings.darkMode') : 'Light Mode'}</p>
+                      <p className="text-xs text-slate-400">{darkMode ? 'Easier on the eyes at night' : 'Clean and bright interface'}</p>
+                    </div>
+                  </div>
+                  <Switch
+                    isSelected={darkMode}
+                    onValueChange={toggleDarkMode}
+                    size="md"
+                    color="primary"
+                  />
+                </div>
               </div>
             </CardBody>
           </Card>

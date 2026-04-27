@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { SpacetimeDBProvider } from 'spacetimedb/react';
 import { connectionBuilder } from './spacetime/client';
+import { NavigationProvider } from './context/NavigationContext';
 import Layout, { type Page } from './components/Layout';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
@@ -47,21 +48,23 @@ function AppContent() {
   }
 
   return (
-    <Layout page={page} setPage={setPage} user={user} onLogout={handleLogout}>
-      {page === 'dashboard' && <Dashboard />}
-      {page === 'contacts' && <Contacts />}
-      {page === 'companies' && <Companies />}
-      {page === 'deals' && <Deals />}
-      {page === 'inbox' && <Inbox />}
-      {page === 'products' && <Products />}
-      {page === 'invoices' && <Invoices />}
-      {page === 'graph' && <GraphView />}
-      {page === 'automations' && <AutomationBuilder />}
-      {page === 'analytics' && <Analytics />}
-      {page === 'social' && <SocialPlanner />}
-      {page === 'knowledgebase' && <KnowledgeBase />}
-      {page === 'settings' && <Settings />}
-    </Layout>
+    <NavigationProvider page={page} setPage={setPage}>
+      <Layout user={user} onLogout={handleLogout}>
+        {page === 'dashboard' && <Dashboard />}
+        {page === 'contacts' && <Contacts />}
+        {page === 'companies' && <Companies />}
+        {page === 'deals' && <Deals />}
+        {page === 'inbox' && <Inbox />}
+        {page === 'products' && <Products />}
+        {page === 'invoices' && <Invoices />}
+        {page === 'graph' && <GraphView />}
+        {page === 'automations' && <AutomationBuilder />}
+        {page === 'analytics' && <Analytics />}
+        {page === 'social' && <SocialPlanner />}
+        {page === 'knowledgebase' && <KnowledgeBase />}
+        {page === 'settings' && <Settings />}
+      </Layout>
+    </NavigationProvider>
   );
 }
 

@@ -1,12 +1,21 @@
 import { useState } from 'react';
-import { Shield, LogIn, Sparkles } from 'lucide-react';
+import { LogIn, Sparkles, Globe } from 'lucide-react';
 import { Button, Input, Card, CardBody } from '@nextui-org/react';
+import { useLanguage } from '../i18n/LanguageContext';
+import type { Lang } from '../i18n/dictionary';
 
 interface LoginProps {
   onLogin: (user: { name: string; email: string }) => void;
 }
 
+const LANG_OPTIONS: { value: Lang; label: string }[] = [
+  { value: 'en', label: 'English' },
+  { value: 'ms', label: 'Bahasa Melayu' },
+  { value: 'zh', label: '中文' },
+];
+
 export default function Login({ onLogin }: LoginProps) {
+  const { t, lang, setLang } = useLanguage();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -28,40 +37,40 @@ export default function Login({ onLogin }: LoginProps) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-brand-50/30 to-slate-100 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-brand-50/30 to-slate-100 dark:from-[#0a1628] dark:via-[#0f1f3a] dark:to-[#0a1628] px-4">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-brand-600 mx-auto mb-4 flex items-center justify-center shadow-lg shadow-brand-200">
-            <Shield className="w-8 h-8 text-white" />
-          </div>
-          <h1 className="text-2xl font-bold text-slate-900 font-outfit">CelcomDigi CRM</h1>
-          <p className="text-sm text-slate-500 mt-1">Unified sales & customer management</p>
+          <img
+            src="/celcomdigi-logo.svg"
+            alt="CelcomDigi"
+            className="h-12 w-auto mx-auto mb-4"
+          />
         </div>
 
         <Card className="border border-slate-100 shadow-xl shadow-slate-200/50">
           <CardBody className="p-6 space-y-5">
             <div>
-              <h2 className="text-lg font-semibold text-slate-900">Welcome back</h2>
-              <p className="text-sm text-slate-500">Sign in to your account</p>
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{t('login.welcomeBack')}</h2>
+              <p className="text-sm text-slate-500">{t('login.signInToAccount')}</p>
             </div>
 
             <div className="space-y-3">
               <Input
-                label="Email"
+                label={t('login.email')}
                 type="email"
                 placeholder="you@company.my"
                 value={email}
                 onValueChange={setEmail}
-                classNames={{ inputWrapper: 'bg-slate-50 border-slate-200' }}
+                classNames={{ inputWrapper: 'bg-slate-50 border-slate-200 dark:bg-[#0f1f3a] dark:border-[#1e3a5f]' }}
               />
               <Input
-                label="Password"
+                label={t('login.password')}
                 type="password"
                 placeholder="••••••••"
                 value={password}
                 onValueChange={setPassword}
-                classNames={{ inputWrapper: 'bg-slate-50 border-slate-200' }}
+                classNames={{ inputWrapper: 'bg-slate-50 border-slate-200 dark:bg-[#0f1f3a] dark:border-[#1e3a5f]' }}
                 onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
               />
             </div>
@@ -74,7 +83,7 @@ export default function Login({ onLogin }: LoginProps) {
               isLoading={loading}
               startContent={!loading && <LogIn className="w-4 h-4" />}
             >
-              Sign In
+              {t('login.signIn')}
             </Button>
 
             <div className="relative py-2">
@@ -82,7 +91,7 @@ export default function Login({ onLogin }: LoginProps) {
                 <div className="w-full border-t border-slate-100" />
               </div>
               <div className="relative flex justify-center">
-                <span className="bg-white px-3 text-xs text-slate-400">or</span>
+                <span className="bg-white dark:bg-[#152a4a] px-3 text-xs text-slate-400">{t('login.or')}</span>
               </div>
             </div>
 
@@ -94,12 +103,35 @@ export default function Login({ onLogin }: LoginProps) {
               isLoading={loading}
               startContent={!loading && <Sparkles className="w-4 h-4" />}
             >
-              Enter Demo Mode
+              {t('login.enterDemo')}
             </Button>
 
             <p className="text-xs text-slate-400 text-center">
-              Demo mode auto-seeds sample data for evaluation.
+              {t('login.demoHint')}
             </p>
+
+            {/* Language selector */}
+            <div className="pt-2 border-t border-slate-100">
+              <div className="flex items-center justify-center gap-2">
+                <Globe className="w-3.5 h-3.5 text-slate-400" />
+                <span className="text-xs text-slate-400">{t('login.language')}</span>
+                <div className="flex gap-1">
+                  {LANG_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => setLang(opt.value)}
+                      className={`px-2 py-0.5 rounded-md text-xs font-medium transition-colors ${
+                        lang === opt.value
+                          ? 'bg-brand-100 text-brand-700'
+                          : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
           </CardBody>
         </Card>
 

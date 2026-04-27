@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Pencil, Trash2, Eye, Upload, X, Users, Tag } from 'lucide-react';
 import { useTable, useDb } from '../spacetime/hooks';
 import { useToast } from '../hooks/useToast';
+import { useLanguage } from '../i18n/LanguageContext';
+import { useNavigation } from '../context/NavigationContext';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import PageHeader from './PageHeader';
 import ConfirmDialog from './ConfirmDialog';
@@ -20,8 +22,10 @@ const statusColorMap: Record<string, 'warning' | 'primary' | 'success' | 'defaul
 };
 
 export default function Contacts() {
+  const { t } = useLanguage();
   const db = useDb();
   const { success } = useToast();
+  const { pendingAction, clearAction } = useNavigation();
   const [contacts] = useTable('contacts');
   const [companies] = useTable('companies');
   const [users] = useTable('users');
@@ -38,6 +42,14 @@ export default function Contacts() {
   const [form, setForm] = useState({
     name: '', email: '', phone: '', companyId: '', status: 'Lead', source: 'Manual',
   });
+
+  useEffect(() => {
+    if (pendingAction === 'createContact') {
+      openCreate();
+      clearAction();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const companyMap = new Map(companies.map((c: any) => [c.id, c]));
 
@@ -142,9 +154,9 @@ export default function Contacts() {
   return (
     <div className="space-y-5 max-w-7xl mx-auto animate-fade-in">
       <PageHeader
-        title="Contacts"
-        subtitle="Manage your leads and customers"
-        actionLabel="Add Contact"
+        title={t('contacts.title')}
+        subtitle={t('contacts.subtitle')}
+        actionLabel={t('contacts.addContact')}
         onAction={openCreate}
         secondaryAction={
           <Button
@@ -152,7 +164,7 @@ export default function Contacts() {
             startContent={<Upload className="w-4 h-4" />}
             onPress={() => setCsvImportOpen(true)}
           >
-            Import CSV
+            {t('common.importCsv')}
           </Button>
         }
       />
@@ -161,21 +173,21 @@ export default function Contacts() {
         <CardBody className="flex flex-row flex-wrap gap-3 py-4">
           <Input
             classNames={{ base: 'max-w-md', inputWrapper: 'bg-slate-50 border-slate-200', input: 'text-sm placeholder:text-slate-400' }}
-            placeholder="Search contacts..."
+            placeholder={t('contacts.searchPlaceholder')}
             startContent={<Search className="w-4 h-4 text-slate-400" />}
             value={search}
             onValueChange={setSearch}
           />
           <Select
             className="max-w-xs"
-            placeholder="Filter by status"
+            placeholder={t('common.filterByStatus')}
             aria-label="Filter contacts by status"
             selectedKeys={statusFilter ? [statusFilter] : []}
             onSelectionChange={(keys) => {
               const val = Array.from(keys)[0] as string;
               setStatusFilter(val === 'all' ? '' : val);
             }}
-            items={[{key: 'all', label: 'All Statuses'}, ...statusOptions.map(s => ({key: s, label: s}))]}
+            items={[{key: 'all', label: t('common.allStatuses')}, ...statusOptions.map(s => ({key: s, label: s}))]}
           >
             {(item: any) => <SelectItem key={item.key} textValue={item.label}>{item.label}</SelectItem>}
           </Select>
@@ -188,17 +200,17 @@ export default function Contacts() {
           <div className="flex items-center justify-between px-4 py-3 bg-brand-50 border-b border-brand-100">
             <div className="flex items-center gap-3">
               <span className="text-sm font-medium text-brand-700">
-                {selectedCount} selected
+                {selectedCount} {t('contacts.selected')}
               </span>
               <Button size="sm" variant="light" className="text-brand-600 h-7" onPress={() => setSelectedKeys(new Set())}>
-                <X className="w-3.5 h-3.5 mr-1" /> Clear
+                <X className="w-3.5 h-3.5 mr-1" /> {t('common.clear')}
               </Button>
             </div>
             <div className="flex items-center gap-2">
               <Dropdown>
                 <DropdownTrigger>
                   <Button size="sm" variant="flat" startContent={<Tag className="w-3.5 h-3.5" />} className="h-8">
-                    Change Status
+                    {t('common.changeStatus')}
                   </Button>
                 </DropdownTrigger>
                 <DropdownMenu
@@ -213,12 +225,12 @@ export default function Contacts() {
               <Dropdown>
                 <DropdownTrigger>
                   <Button size="sm" variant="flat" startContent={<Users className="w-3.5 h-3.5" />} className="h-8">
-                    Assign To
+                    {t('common.assignTo')}
                   </Button>
                 </DropdownTrigger>
                 <DropdownMenu
                   aria-label="Assign to"
-                  items={[{key: 'none', label: 'Unassigned'}, ...users.map((u: any) => ({key: u.id.toString(), label: u.name}))]}
+                  items={[{key: 'none', label: t('common.unassigned')}, ...users.map((u: any) => ({key: u.id.toString(), label: u.name}))]}
                   onAction={(key) => handleBulkAssign(key as string)}
                 >
                   {(item: any) => <DropdownItem key={item.key}>{item.label}</DropdownItem>}
@@ -226,7 +238,7 @@ export default function Contacts() {
               </Dropdown>
 
               <Button size="sm" color="danger" variant="flat" startContent={<Trash2 className="w-3.5 h-3.5" />} className="h-8" onPress={() => setBulkConfirmOpen(true)}>
-                Delete
+                {t('common.delete')}
               </Button>
             </div>
           </div>
@@ -248,15 +260,15 @@ export default function Contacts() {
             classNames={{ th: 'bg-slate-50 text-slate-500 text-xs font-semibold uppercase tracking-wider', td: 'py-3' }}
           >
             <TableHeader>
-              <TableColumn>NAME</TableColumn>
-              <TableColumn>EMAIL</TableColumn>
-              <TableColumn>PHONE</TableColumn>
-              <TableColumn>COMPANY</TableColumn>
-              <TableColumn>STATUS</TableColumn>
-              <TableColumn>SOURCE</TableColumn>
-              <TableColumn className="text-right">ACTIONS</TableColumn>
+              <TableColumn>{t('contacts.name')}</TableColumn>
+              <TableColumn>{t('contacts.email')}</TableColumn>
+              <TableColumn>{t('contacts.phone')}</TableColumn>
+              <TableColumn>{t('contacts.company')}</TableColumn>
+              <TableColumn>{t('contacts.status')}</TableColumn>
+              <TableColumn>{t('contacts.source')}</TableColumn>
+              <TableColumn className="text-right">{t('contacts.actions')}</TableColumn>
             </TableHeader>
-            <TableBody emptyContent="No contacts found">
+            <TableBody emptyContent={t('contacts.noContacts')}>
               {visibleContacts.map((c: any) => (
                 <TableRow key={c.id.toString()} className="hover:bg-slate-50/60 transition-colors">
                   <TableCell>
@@ -306,28 +318,28 @@ export default function Contacts() {
 
       <Modal isOpen={modalOpen} onOpenChange={setModalOpen} size="lg">
         <ModalContent>
-          <ModalHeader className="text-slate-900 font-outfit">{editing ? 'Edit Contact' : 'New Contact'}</ModalHeader>
+          <ModalHeader className="text-slate-900 font-outfit">{editing ? t('contacts.editContact') : t('contacts.newContact')}</ModalHeader>
           <ModalBody className="gap-4">
-            <Input label="Name" value={form.name} onValueChange={(v) => setForm({ ...form, name: v })} isRequired />
+            <Input label={t('contacts.name')} value={form.name} onValueChange={(v) => setForm({ ...form, name: v })} isRequired />
             <div className="grid grid-cols-2 gap-4">
-              <Input label="Email" type="email" value={form.email} onValueChange={(v) => setForm({ ...form, email: v })} isRequired />
-              <Input label="Phone" value={form.phone} onValueChange={(v) => setForm({ ...form, phone: v })} />
+              <Input label={t('contacts.email')} type="email" value={form.email} onValueChange={(v) => setForm({ ...form, email: v })} isRequired />
+              <Input label={t('contacts.phone')} value={form.phone} onValueChange={(v) => setForm({ ...form, phone: v })} />
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <Select label="Status" selectedKeys={[form.status]} onSelectionChange={(keys) => setForm({ ...form, status: Array.from(keys)[0] as string })} items={statusOptions.map(s => ({key: s, label: s}))}>
+              <Select label={t('contacts.status')} selectedKeys={[form.status]} onSelectionChange={(keys) => setForm({ ...form, status: Array.from(keys)[0] as string })} items={statusOptions.map(s => ({key: s, label: s}))}>
                 {(item: any) => <SelectItem key={item.key} textValue={item.label}>{item.label}</SelectItem>}
               </Select>
-              <Select label="Source" selectedKeys={[form.source]} onSelectionChange={(keys) => setForm({ ...form, source: Array.from(keys)[0] as string })} items={sourceOptions.map(s => ({key: s, label: s}))}>
+              <Select label={t('contacts.source')} selectedKeys={[form.source]} onSelectionChange={(keys) => setForm({ ...form, source: Array.from(keys)[0] as string })} items={sourceOptions.map(s => ({key: s, label: s}))}>
                 {(item: any) => <SelectItem key={item.key} textValue={item.label}>{item.label}</SelectItem>}
               </Select>
             </div>
-            <Select label="Company" selectedKeys={form.companyId ? [form.companyId] : []} onSelectionChange={(keys) => setForm({ ...form, companyId: Array.from(keys)[0] as string || '' })} items={[{key: 'none', label: 'None'}, ...companies.map((c: any) => ({key: c.id.toString(), label: c.name}))]}>
+            <Select label={t('contacts.company')} selectedKeys={form.companyId ? [form.companyId] : []} onSelectionChange={(keys) => setForm({ ...form, companyId: Array.from(keys)[0] as string || '' })} items={[{key: 'none', label: t('common.clear')}, ...companies.map((c: any) => ({key: c.id.toString(), label: c.name}))]}>
               {(item: any) => <SelectItem key={item.key} textValue={item.label}>{item.label}</SelectItem>}
             </Select>
           </ModalBody>
           <ModalFooter>
-            <Button variant="light" onPress={() => setModalOpen(false)}>Cancel</Button>
-            <Button color="primary" className="bg-brand-600" onPress={save}>Save</Button>
+            <Button variant="light" onPress={() => setModalOpen(false)}>{t('common.cancel')}</Button>
+            <Button color="primary" className="bg-brand-600" onPress={save}>{t('common.save')}</Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
@@ -336,18 +348,18 @@ export default function Contacts() {
         isOpen={confirmOpen}
         onClose={() => setConfirmOpen(false)}
         onConfirm={remove}
-        title="Delete contact?"
+        title={`${t('common.delete')} ${t('contacts.title').toLowerCase()}?`}
         description="This will permanently remove the contact from your CRM."
-        confirmLabel="Delete"
+        confirmLabel={t('common.delete')}
       />
 
       <ConfirmDialog
         isOpen={bulkConfirmOpen}
         onClose={() => setBulkConfirmOpen(false)}
         onConfirm={handleBulkDelete}
-        title={`Delete ${selectedCount} contacts?`}
+        title={`${t('common.delete')} ${selectedCount} ${t('contacts.title').toLowerCase()}?`}
         description="This will permanently remove all selected contacts from your CRM. This action cannot be undone."
-        confirmLabel="Delete All"
+        confirmLabel={t('common.deleteAll')}
       />
 
       {drawerContact && <ContactDrawer contact={drawerContact} onClose={() => setDrawerContact(null)} />}

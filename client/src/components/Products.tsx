@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Search, Pencil, Trash2, RefreshCw, Store } from 'lucide-react';
 import { useTable, useDb } from '../spacetime/hooks';
+import { useLanguage } from '../i18n/LanguageContext';
 import PageHeader from './PageHeader';
 import ConfirmDialog from './ConfirmDialog';
 import {
@@ -10,6 +11,7 @@ import {
 } from '@nextui-org/react';
 
 export default function Products() {
+  const { t } = useLanguage();
   const db = useDb();
   const [products] = useTable('products');
   const [search, setSearch] = useState('');
@@ -78,7 +80,7 @@ export default function Products() {
 
   return (
     <div className="space-y-5 max-w-7xl mx-auto animate-fade-in">
-      <PageHeader title="Products" subtitle="Manage your product catalog" actionLabel="Add Product" onAction={openCreate} />
+      <PageHeader title={t('products.title')} subtitle={t('products.subtitle')} actionLabel={t('products.addProduct')} onAction={openCreate} />
 
       <Card className="border border-slate-100 shadow-sm">
         <CardBody className="py-4">

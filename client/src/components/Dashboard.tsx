@@ -12,6 +12,8 @@ import {
   PieChart, Pie, Cell
 } from 'recharts';
 import StatCard from './StatCard';
+import { useNavigation } from '../context/NavigationContext';
+import { useLanguage } from '../i18n/LanguageContext';
 
 const ACTIVITY_ICONS: Record<string, React.ElementType> = {
   Call: Phone, Meeting: Calendar, Email: Mail, Whatsapp: MessageSquare,
@@ -30,6 +32,7 @@ const ACTIVITY_COLORS: Record<string, string> = {
 const PIE_COLORS = ['#0078d4', '#10b981', '#f43f5e', '#f59e0b'];
 
 export default function Dashboard() {
+  const { t, lang } = useLanguage();
   const [contacts] = useTable('contacts');
   const [deals] = useTable('deals');
   const [stages] = useTable('pipeline_stages');
@@ -80,6 +83,7 @@ export default function Dashboard() {
       .map(([name, value]) => ({ name, value }));
   }, [deals]);
 
+  const { navigate } = useNavigation();
   const [showAllActivity, setShowAllActivity] = useState(false);
 
   // Recent activities grouped
@@ -98,17 +102,17 @@ export default function Dashboard() {
     for (const a of sorted) {
       const date = safeDate(a.createdAt);
       const diffDays = date ? Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24)) : 999;
-      let label = 'Earlier';
-      if (diffDays === 0) label = 'Today';
-      else if (diffDays === 1) label = 'Yesterday';
-      else if (diffDays < 7) label = 'This week';
+      let label = t('dashboard.earlier');
+      if (diffDays === 0) label = t('dashboard.today');
+      else if (diffDays === 1) label = t('dashboard.yesterday');
+      else if (diffDays < 7) label = t('dashboard.thisWeek');
 
       const group = groups.find((g) => g.label === label);
       if (group) group.items.push(a);
       else groups.push({ label, items: [a] });
     }
     return groups;
-  }, [activities]);
+  }, [activities, t]);
 
   const allActivities = useMemo(() => {
     return [...activities].sort(
@@ -121,9 +125,9 @@ export default function Dashboard() {
   }, [activities]);
 
   const quickActions = [
-    { label: 'Add Contact', icon: Users, color: 'bg-brand-600' },
-    { label: 'Create Deal', icon: Banknote, color: 'bg-emerald-600' },
-    { label: 'New Invoice', icon: FileText, color: 'bg-sky-600' },
+    { label: t('dashboard.addContact'), icon: Users, action: () => navigate('contacts', 'createContact') },
+    { label: t('dashboard.createDeal'), icon: Banknote, action: () => navigate('deals', 'createDeal') },
+    { label: t('dashboard.newInvoice'), icon: FileText, action: () => navigate('invoices', 'createInvoice') },
   ];
 
   return (
@@ -132,10 +136,10 @@ export default function Dashboard() {
       <div className="flex items-end justify-between">
         <div>
           <h1 className="text-3xl font-semibold font-outfit text-slate-900">
-            Welcome to CelcomDigi CRM
+            {t('dashboard.title')}
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            {new Date().toLocaleDateString('en-MY', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+            {new Date().toLocaleDateString(lang === 'zh' ? 'zh-CN' : lang === 'ms' ? 'ms-MY' : 'en-MY', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           </p>
         </div>
         <div className="hidden sm:flex items-center gap-2">
@@ -146,6 +150,7 @@ export default function Dashboard() {
               variant="flat"
               className="font-medium text-slate-600 bg-white border border-slate-200"
               startContent={<action.icon className="w-3.5 h-3.5" />}
+              onPress={action.action}
             >
               {action.label}
             </Button>
@@ -155,10 +160,10 @@ export default function Dashboard() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <StatCard label="Total Contacts" value={contacts.length} icon={Users} color="indigo" trend={12} trendLabel="vs last month" />
-        <StatCard label="Open Pipeline" value={formatRM(totalPipeline)} icon={Banknote} color="amber" trend={8} trendLabel="vs last month" />
-        <StatCard label="Won Revenue" value={formatRM(totalRevenue)} icon={TrendingUp} color="emerald" trend={23} trendLabel="this quarter" />
-        <StatCard label="Unread Messages" value={unreadCount} icon={Inbox} color="rose" />
+        <StatCard label={t('dashboard.totalContacts')} value={contacts.length} icon={Users} color="indigo" trend={12} trendLabel="vs last month" />
+        <StatCard label={t('dashboard.openPipeline')} value={formatRM(totalPipeline)} icon={Banknote} color="amber" trend={8} trendLabel="vs last month" />
+        <StatCard label={t('dashboard.wonRevenue')} value={formatRM(totalRevenue)} icon={TrendingUp} color="emerald" trend={23} trendLabel="this quarter" />
+        <StatCard label={t('dashboard.unreadMessages')} value={unreadCount} icon={Inbox} color="rose" />
       </div>
 
       {/* Charts + Activity */}
@@ -167,13 +172,13 @@ export default function Dashboard() {
         <Card className="lg:col-span-2 border border-slate-100">
           <CardHeader className="px-6 py-5 border-b border-slate-50">
             <div>
-              <h3 className="text-base font-semibold font-outfit text-slate-900">Pipeline Overview</h3>
+              <h3 className="text-base font-semibold font-outfit text-slate-900">{t('dashboard.pipelineOverview')}</h3>
               <p className="text-xs text-slate-400 mt-0.5">Deal distribution by stage</p>
             </div>
           </CardHeader>
           <CardBody className="p-6">
             <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <BarChart data={pipelineData} barCategoryGap="20%">
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
                   <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
@@ -193,13 +198,13 @@ export default function Dashboard() {
         <Card className="border border-slate-100">
           <CardHeader className="px-6 py-5 border-b border-slate-50">
             <div>
-              <h3 className="text-base font-semibold font-outfit text-slate-900">Deal Status</h3>
+              <h3 className="text-base font-semibold font-outfit text-slate-900">{t('dashboard.dealStatus')}</h3>
               <p className="text-xs text-slate-400 mt-0.5">Breakdown by outcome</p>
             </div>
           </CardHeader>
           <CardBody className="p-6">
             <div className="h-48">
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <PieChart>
                   <Pie
                     data={statusData}
@@ -234,11 +239,11 @@ export default function Dashboard() {
       <Card className="border border-slate-100">
         <CardHeader className="px-6 py-5 border-b border-slate-50 flex justify-between items-center">
           <div>
-            <h3 className="text-base font-semibold font-outfit text-slate-900">Recent Activity</h3>
+            <h3 className="text-base font-semibold font-outfit text-slate-900">{t('dashboard.recentActivity')}</h3>
             <p className="text-xs text-slate-400 mt-0.5">Latest actions across your team</p>
           </div>
           <Button size="sm" variant="light" className="text-brand-600 font-medium" endContent={<ArrowRight className="w-3.5 h-3.5" />} onPress={() => setShowAllActivity(true)}>
-            View all
+            {t('dashboard.viewAll')}
           </Button>
         </CardHeader>
         <CardBody className="p-0">
@@ -283,7 +288,7 @@ export default function Dashboard() {
       <Modal isOpen={showAllActivity} onOpenChange={setShowAllActivity} size="lg" scrollBehavior="inside">
         <ModalContent>
           <ModalHeader className="flex items-center justify-between">
-            <span>All Activity</span>
+            <span>{t('dashboard.allActivity')}</span>
             <Button isIconOnly size="sm" variant="light" onPress={() => setShowAllActivity(false)}><X className="w-4 h-4" /></Button>
           </ModalHeader>
           <ModalBody className="py-4">

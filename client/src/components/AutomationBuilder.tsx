@@ -2,18 +2,23 @@ import { useState } from 'react';
 import { Plus, Wand2, Sparkles, Save, Play, Pause, Trash2, Mail, Bot } from 'lucide-react';
 import VoiceInput from './VoiceInput';
 import { useTable, useDb } from '../spacetime/hooks';
+import { useLanguage } from '../i18n/LanguageContext';
 import PageHeader from './PageHeader';
 import ConfirmDialog from './ConfirmDialog';
 import WorkflowCanvas from './WorkflowCanvas';
-import { generateWorkflow, type GeneratedWorkflow } from '../services/mercury';
+import { generateWorkflow, type GeneratedWorkflow, type CompanyProfile, type KbContext } from '../services/ai';
 import {
   Button, Card, CardBody, Input, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter,
   Badge, Textarea, Tabs, Tab
 } from '@nextui-org/react';
 
 export default function AutomationBuilder() {
+  const { t } = useLanguage();
   const db = useDb();
   const [workflows] = useTable('workflows');
+  const [companies] = useTable('companies');
+  const [memories] = useTable('memories');
+  const [documents] = useTable('documents');
   const [modalOpen, setModalOpen] = useState(false);
 
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -30,11 +35,36 @@ export default function AutomationBuilder() {
     setModalOpen(true);
   };
 
+  const buildContext = (): { company?: CompanyProfile; kb?: KbContext } => {
+    const company = companies[0]
+      ? {
+          name: companies[0].name,
+          industry: companies[0].industry,
+          description: companies[0].notes,
+        }
+      : undefined;
+    const kbMemories = memories
+      .slice(0, 5)
+      .map((m: any) => m.content)
+      .filter(Boolean);
+    const kbDocs = documents
+      .slice(0, 3)
+      .map((d: any) => d.extractedSummary || d.title)
+      .filter(Boolean);
+    return {
+      company,
+      kb: kbMemories.length || kbDocs.length
+        ? { memories: kbMemories, documents: kbDocs }
+        : undefined,
+    };
+  };
+
   const handleGenerate = async () => {
     if (!description.trim()) return;
     setGenerating(true);
     try {
-      const wf = await generateWorkflow(description.trim());
+      const { company, kb } = buildContext();
+      const wf = await generateWorkflow(description.trim(), company, kb);
       setGenerated(wf);
       setEmailSubject(wf.email_template?.subject || '');
       setEmailBody(wf.email_template?.body || '');
@@ -88,7 +118,7 @@ export default function AutomationBuilder() {
 
   return (
     <div className="space-y-5 max-w-7xl mx-auto animate-fade-in">
-      <PageHeader title="Automations" subtitle="Build workflows with natural language powered by Mercury 2" actionLabel="Create Automation" actionIcon={Plus} onAction={startCreate} />
+      <PageHeader title={t('automations.title')} subtitle={t('automations.subtitle')} actionLabel={t('automations.createAutomation')} actionIcon={Plus} onAction={startCreate} />
 
       {/* Workflow list */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -165,7 +195,7 @@ export default function AutomationBuilder() {
               <>
                 <p className="text-sm text-slate-500">
                   Tell us what you want to automate in plain English. Our AI (powered by{' '}
-                  <span className="font-semibold text-brand-600">Mercury 2</span>) will design a workflow for you.
+                  <span className="font-semibold text-brand-600">AI</span>) will design a workflow for you.
                 </p>
                 <div className="relative">
                   <Textarea

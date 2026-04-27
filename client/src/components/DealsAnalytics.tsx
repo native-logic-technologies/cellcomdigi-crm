@@ -165,7 +165,7 @@ export default function DealsAnalytics() {
         <Card className="border border-slate-100 shadow-sm">
           <CardBody className="p-5">
             <h3 className="text-sm font-semibold text-slate-800 mb-4">Pipeline Value by Stage</h3>
-            <ResponsiveContainer width="100%" height={260}>
+            <ResponsiveContainer width="100%" height={260} minWidth={0}>
               <BarChart data={pipelineValue}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                 <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
@@ -185,7 +185,7 @@ export default function DealsAnalytics() {
           <CardBody className="p-5">
             <h3 className="text-sm font-semibold text-slate-800 mb-4">Deal Outcomes</h3>
             <div className="flex items-center justify-center">
-              <ResponsiveContainer width="100%" height={260}>
+              <ResponsiveContainer width="100%" height={260} minWidth={0}>
                 <PieChart>
                   <Pie
                     data={winLossStats}

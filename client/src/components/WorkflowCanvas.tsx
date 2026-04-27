@@ -1,5 +1,5 @@
 import { Zap, Clock, Mail, CheckSquare, PenLine, GitBranch, Flag, ArrowDown } from 'lucide-react';
-import type { WorkflowStep } from '../services/mercury';
+import type { WorkflowStep } from '../services/ai';
 
 const STEP_ICONS: Record<string, React.ElementType> = {
   trigger: Zap,

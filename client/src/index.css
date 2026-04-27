@@ -39,6 +39,209 @@
   }
 }
 
+/* ───────────────────────────────────────────────────────────
+   DARK MODE — Dark Blue Palette (Navy / Slate-Blue)
+   Overrides common Tailwind utility classes when .dark is
+   present on <html>. This covers the bulk of the app without
+   touching every component file.
+   ─────────────────────────────────────────────────────────── */
+@layer base {
+  .dark body {
+    background-color: #0a1628;
+    color: #e2e8f0;
+  }
+
+  /* Backgrounds */
+  .dark .bg-slate-50   { background-color: #0a1628 !important; }
+  .dark .bg-slate-100  { background-color: #0f1f3a !important; }
+  .dark .bg-slate-200  { background-color: #1a3050 !important; }
+  .dark .bg-slate-900  { background-color: #060d18 !important; }
+  .dark .bg-white      { background-color: #152a4a !important; }
+  .dark .bg-black\/30  { background-color: rgba(0,0,0,0.6) !important; }
+  .dark .bg-black\/50  { background-color: rgba(0,0,0,0.7) !important; }
+
+  /* Hover backgrounds */
+  .dark .hover\:bg-slate-50:hover  { background-color: #0f1f3a !important; }
+  .dark .hover\:bg-slate-100:hover { background-color: #152a4a !important; }
+  .dark .hover\:bg-white:hover     { background-color: #1a3050 !important; }
+
+  /* Text */
+  .dark .text-slate-900  { color: #f1f5f9 !important; }
+  .dark .text-slate-800  { color: #e2e8f0 !important; }
+  .dark .text-slate-700  { color: #cbd5e1 !important; }
+  .dark .text-slate-600  { color: #94a3b8 !important; }
+  .dark .text-slate-500  { color: #94a3b8 !important; }
+  .dark .text-slate-400  { color: #64748b !important; }
+  .dark .text-slate-300  { color: #475569 !important; }
+
+  /* Hover text */
+  .dark .hover\:text-slate-700:hover { color: #e2e8f0 !important; }
+  .dark .hover\:text-slate-600:hover { color: #cbd5e1 !important; }
+  .dark .hover\:text-slate-500:hover { color: #94a3b8 !important; }
+
+  /* Borders */
+  .dark .border-slate-50  { border-color: #0f1f3a !important; }
+  .dark .border-slate-100 { border-color: #1a3050 !important; }
+  .dark .border-slate-200 { border-color: #1e3a5f !important; }
+  .dark .border-slate-300 { border-color: #234870 !important; }
+  .dark .border-white     { border-color: #1e3a5f !important; }
+
+  /* Hover borders */
+  .dark .hover\:border-slate-200:hover { border-color: #234870 !important; }
+  .dark .hover\:border-slate-300:hover { border-color: #2a5080 !important; }
+
+  /* Brand accents — darker in dark mode */
+  .dark .bg-brand-50   { background-color: #0c2d4d !important; }
+  .dark .bg-brand-100  { background-color: #0f3a66 !important; }
+  .dark .text-brand-700 { color: #66b7e7 !important; }
+  .dark .text-brand-600 { color: #4aa8e3 !important; }
+  .dark .border-brand-100 { border-color: #0f3a66 !important; }
+  .dark .border-brand-200 { border-color: #1a4f7a !important; }
+  .dark .border-brand-300 { border-color: #23608f !important; }
+  .dark .hover\:bg-brand-50:hover { background-color: #0c2d4d !important; }
+
+  /* Semantic color backgrounds */
+  .dark .bg-emerald-50  { background-color: #064e3b !important; }
+  .dark .bg-emerald-100 { background-color: #065f46 !important; }
+  .dark .bg-rose-50     { background-color: #4c0519 !important; }
+  .dark .bg-rose-100    { background-color: #5c0b1e !important; }
+  .dark .bg-amber-50    { background-color: #451a03 !important; }
+  .dark .bg-amber-100   { background-color: #562a08 !important; }
+  .dark .bg-sky-50      { background-color: #082f49 !important; }
+  .dark .bg-danger-50   { background-color: #4c0519 !important; }
+
+  /* Semantic borders */
+  .dark .border-emerald-200 { border-color: #065f46 !important; }
+  .dark .border-rose-200    { border-color: #5c0b1e !important; }
+  .dark .border-amber-200   { border-color: #562a08 !important; }
+  .dark .border-sky-200     { border-color: #0c4a6e !important; }
+
+  /* NextUI Card / Navbar / Input overrides */
+  .dark [class*="bg-content1"],
+  .dark .bg-content1 {
+    background-color: #152a4a !important;
+  }
+  .dark [class*="bg-content2"],
+  .dark .bg-content2 {
+    background-color: #1a3050 !important;
+  }
+  .dark [class*="bg-default-100"],
+  .dark .bg-default-100 {
+    background-color: #0f1f3a !important;
+  }
+  .dark [class*="bg-default-200"],
+  .dark .bg-default-200 {
+    background-color: #1a3050 !important;
+  }
+
+  /* Table headers / rows */
+  .dark [class*="bg-default-50"],
+  .dark .bg-default-50 {
+    background-color: #0a1628 !important;
+  }
+
+  /* Foreground text in NextUI */
+  .dark [class*="text-foreground"],
+  .dark .text-foreground {
+    color: #e2e8f0 !important;
+  }
+  .dark [class*="text-default-500"],
+  .dark .text-default-500 {
+    color: #94a3b8 !important;
+  }
+  .dark [class*="text-default-600"],
+  .dark .text-default-600 {
+    color: #cbd5e1 !important;
+  }
+
+  /* Dropdown menu backgrounds */
+  .dark [data-slot="base"] [data-slot="content"] {
+    background-color: #152a4a !important;
+    border-color: #1e3a5f !important;
+  }
+  .dark [data-slot="base"] [data-slot="content"] [data-slot="item"] {
+    color: #e2e8f0 !important;
+  }
+  .dark [data-slot="base"] [data-slot="content"] [data-slot="item"]:hover {
+    background-color: #1a3050 !important;
+  }
+
+  /* Backdrop blur navbar / panels */
+  .dark .backdrop-blur-xl,
+  .dark .backdrop-blur-md,
+  .dark .backdrop-blur-sm {
+    background-color: rgba(15, 31, 58, 0.85) !important;
+  }
+
+  /* Modal / Popover overlays */
+  .dark [data-slot="backdrop"] {
+    background-color: rgba(2, 6, 12, 0.7) !important;
+  }
+
+  /* Opacity background variants */
+  .dark .bg-white\/90,
+  .dark .bg-white\/80,
+  .dark .bg-white\/70,
+  .dark .bg-white\/60 {
+    background-color: rgba(21, 42, 74, 0.9) !important;
+  }
+  .dark .bg-slate-50\/80,
+  .dark .bg-slate-50\/90,
+  .dark .bg-slate-50\/60,
+  .dark .bg-slate-50\/50 {
+    background-color: rgba(10, 22, 40, 0.9) !important;
+  }
+
+  /* Shadow colors */
+  .dark .shadow-slate-200\/50,
+  .dark .shadow-slate-200 {
+    --tw-shadow-color: rgba(30, 58, 95, 0.3) !important;
+  }
+  .dark .shadow-sm {
+    --tw-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.3) !important;
+  }
+  .dark .shadow-xl {
+    --tw-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.4) !important;
+  }
+  .dark .shadow-lg {
+    --tw-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.4) !important;
+  }
+  .dark .shadow-brand-200 {
+    --tw-shadow-color: rgba(0, 120, 212, 0.25) !important;
+  }
+
+  /* Login gradient */
+  .dark .bg-gradient-to-br.from-slate-50 {
+    background: linear-gradient(135deg, #0a1628 0%, #0f1f3a 50%, #0a1628 100%) !important;
+  }
+
+  /* Gradient stops */
+  .dark .from-white      { --tw-gradient-from: #152a4a !important; }
+  .dark .to-white        { --tw-gradient-to: #152a4a !important; }
+  .dark .from-slate-50   { --tw-gradient-from: #0a1628 !important; }
+  .dark .to-slate-50     { --tw-gradient-to: #0a1628 !important; }
+  .dark .from-slate-100  { --tw-gradient-from: #0f1f3a !important; }
+  .dark .to-slate-100    { --tw-gradient-to: #0f1f3a !important; }
+  .dark .from-brand-50   { --tw-gradient-from: #0c2d4d !important; }
+  .dark .from-brand-50\/50 { --tw-gradient-from: rgba(12, 45, 77, 0.5) !important; }
+
+  /* Scrollbars */
+  .dark ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .dark ::-webkit-scrollbar-track {
+    background: #0a1628;
+  }
+  .dark ::-webkit-scrollbar-thumb {
+    background: #1e3a5f;
+    border-radius: 4px;
+  }
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: #2a5080;
+  }
+}
+
 @layer utilities {
   .font-outfit {
     font-family: var(--font-outfit);

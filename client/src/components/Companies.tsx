@@ -3,6 +3,7 @@ import { Search, Pencil, Trash2, Eye, Phone, Mail, Globe, StickyNote, X } from '
 import { useTable, useDb } from '../spacetime/hooks';
 import { useToast } from '../hooks/useToast';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
+import { useLanguage } from '../i18n/LanguageContext';
 import PageHeader from './PageHeader';
 import ConfirmDialog from './ConfirmDialog';
 import CompanyDrawer from './CompanyDrawer';
@@ -13,6 +14,7 @@ import {
 } from '@nextui-org/react';
 
 export default function Companies() {
+  const { t } = useLanguage();
   const db = useDb();
   const { success } = useToast();
   const [companies] = useTable('companies');
@@ -111,7 +113,7 @@ export default function Companies() {
 
   return (
     <div className="space-y-5 max-w-7xl mx-auto animate-fade-in">
-      <PageHeader title="Companies" subtitle="Manage your business accounts" actionLabel="Add Company" onAction={openCreate} />
+      <PageHeader title={t('companies.title')} subtitle={t('companies.subtitle')} actionLabel={t('companies.addCompany')} onAction={openCreate} />
 
       <Card className="border border-slate-100 shadow-sm">
         <CardBody className="py-4">

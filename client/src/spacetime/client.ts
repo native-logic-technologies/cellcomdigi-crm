@@ -20,11 +20,19 @@ export const connectionBuilder = DbConnection.builder()
       .onApplied(() => {
         console.log('Subscriptions applied');
         // Seed demo data if database is empty
-        let hasData = false;
-        for (const _ of conn.db.contacts.iter()) { hasData = true; break; }
-        if (!hasData) {
+        const lang = localStorage.getItem('cellcom_language') || 'en';
+        let hasContacts = false;
+        for (const _ of conn.db.contacts.iter()) { hasContacts = true; break; }
+        if (!hasContacts) {
           console.log('Database empty — seeding demo data...');
-          (conn.reducers as any).seedDemoData({});
+          (conn.reducers as any).seedDemoData({ language: lang });
+        }
+        // Seed rich inbox conversations if fewer than 3 exist
+        let convCount = 0;
+        for (const _ of conn.db.conversations.iter()) { convCount++; if (convCount >= 3) break; }
+        if (convCount < 3) {
+          console.log('Inbox sparse — seeding demo conversations...');
+          (conn.reducers as any).seedInboxData({ tenantId: 1n, language: lang });
         }
       })
       .onError((_ctx: any) => console.error('Subscription error:', _ctx))

@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Pencil, Trash2, CheckCircle, Eye, X } from 'lucide-react';
 import { formatDate } from '../lib/dateUtils';
 import { useTable, useDb } from '../spacetime/hooks';
+import { useLanguage } from '../i18n/LanguageContext';
 import PageHeader from './PageHeader';
+import { useNavigation } from '../context/NavigationContext';
 import ConfirmDialog from './ConfirmDialog';
 import {
   Button, Input, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter,
@@ -19,7 +21,9 @@ const lhdnColorMap: Record<string, 'warning' | 'success' | 'danger'> = {
 };
 
 export default function Invoices() {
+  const { t } = useLanguage();
   const db = useDb();
+  const { pendingAction, clearAction } = useNavigation();
   const [invoices] = useTable('invoices');
   const [contacts] = useTable('contacts');
   const [search, setSearch] = useState('');
@@ -32,6 +36,14 @@ export default function Invoices() {
     invoiceNumber: '', contactId: '', issueDate: '', dueDate: '',
     subtotal: '', taxAmount: '', total: '', currency: 'MYR', status: 'Draft',
   });
+
+  useEffect(() => {
+    if (pendingAction === 'createInvoice') {
+      openCreate();
+      clearAction();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const contactMap = new Map(contacts.map((c: any) => [c.id, c]));
 
@@ -107,7 +119,7 @@ export default function Invoices() {
 
   return (
     <div className="space-y-5 max-w-7xl mx-auto animate-fade-in">
-      <PageHeader title="Invoices" subtitle="Manage billing and LHDN e-invoicing" actionLabel="New Invoice" onAction={openCreate} />
+      <PageHeader title={t('invoices.title')} subtitle={t('invoices.subtitle')} actionLabel={t('invoices.newInvoice')} onAction={openCreate} />
 
       <Card className="border border-slate-100 shadow-sm">
         <CardBody className="py-4">

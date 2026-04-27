@@ -1,4 +1,4 @@
-// Inception Labs Mercury 2 API Service
+// AI API Service
 // OpenAI-compatible API for workflow generation
 
 const API_URL = 'https://api.inceptionlabs.ai/v1/chat/completions';
@@ -23,8 +23,30 @@ export interface GeneratedWorkflow {
   };
 }
 
-const SYSTEM_PROMPT = `You are an automation workflow builder for a CRM system. 
+export interface CompanyProfile {
+  name: string;
+  industry?: string;
+  description?: string;
+}
+
+export interface KbContext {
+  memories: string[];
+  documents: string[];
+}
+
+function buildSystemPrompt(company?: CompanyProfile, kb?: KbContext): string {
+  const companySection = company
+    ? `\nCompany Profile:\n- Name: ${company.name}\n- Industry: ${company.industry || 'N/A'}\n- Description: ${company.description || 'N/A'}\n`
+    : '';
+
+  const kbSection = kb
+    ? `\nKnowledge Base Context:\n${kb.memories.length > 0 ? '- Memories: ' + kb.memories.slice(0, 5).join('; ') : ''}\n${kb.documents.length > 0 ? '- Documents: ' + kb.documents.slice(0, 3).join('; ') : ''}\n`
+    : '';
+
+  return `You are an automation workflow builder for a CRM system. 
 Given a user's natural language description, generate a JSON workflow definition.
+
+When generating email templates, use the company profile and knowledge base context below to write personalised, contextually relevant emails that reflect the company's brand voice and offerings. Do NOT use generic placeholder text — reference actual services, products, and value propositions from the knowledge base.${companySection}${kbSection}
 
 Available step types:
 - trigger: Entry point (e.g., new_contact, deal_won, schedule)
@@ -51,17 +73,24 @@ Respond ONLY with valid JSON in this exact format:
 
 Use CRM variables like {{contact.name}}, {{contact.email}}, {{company.name}}, {{deal.value}}.
 Keep workflows simple — 3-5 steps maximum.`;
-
-function getApiKey(): string | null {
-  return (import.meta as any).env?.VITE_MERCURY_API_KEY || localStorage.getItem('mercury_api_key') || null;
 }
 
-export async function generateWorkflow(description: string): Promise<GeneratedWorkflow> {
+function getApiKey(): string | null {
+  return (import.meta as any).env?.VITE_AI_API_KEY || localStorage.getItem('ai_api_key') || null;
+}
+
+export async function generateWorkflow(
+  description: string,
+  company?: CompanyProfile,
+  kb?: KbContext
+): Promise<GeneratedWorkflow> {
   const apiKey = getApiKey();
 
   if (!apiKey) {
-    return mockGenerateWorkflow(description);
+    return mockGenerateWorkflow(description, company, kb);
   }
+
+  const systemPrompt = buildSystemPrompt(company, kb);
 
   const res = await fetch(API_URL, {
     method: 'POST',
@@ -72,7 +101,7 @@ export async function generateWorkflow(description: string): Promise<GeneratedWo
     body: JSON.stringify({
       model: MODEL,
       messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'system', content: systemPrompt },
         { role: 'user', content: description },
       ],
       temperature: 0.3,
@@ -82,12 +111,12 @@ export async function generateWorkflow(description: string): Promise<GeneratedWo
 
   if (!res.ok) {
     const err = await res.text();
-    throw new Error(`Mercury API error: ${res.status} ${err}`);
+    throw new Error(`AI API error: ${res.status} ${err}`);
   }
 
   const data = await res.json();
   const content = data.choices?.[0]?.message?.content;
-  if (!content) throw new Error('Empty response from Mercury API');
+  if (!content) throw new Error('Empty response from AI API');
 
   try {
     const jsonMatch = content.match(/\{[\s\S]*\}/);
@@ -98,8 +127,17 @@ export async function generateWorkflow(description: string): Promise<GeneratedWo
   }
 }
 
-function mockGenerateWorkflow(description: string): GeneratedWorkflow {
+function mockGenerateWorkflow(
+  description: string,
+  company?: CompanyProfile,
+  kb?: KbContext
+): GeneratedWorkflow {
   const desc = description.toLowerCase();
+  const companyName = company?.name || 'CelcomDigi';
+  const industry = company?.industry || 'telecommunications';
+  const kbContext = kb?.memories?.length
+    ? ` We specialise in ${kb.memories[0].slice(0, 120)}...`
+    : '';
 
   if (desc.includes('website') || desc.includes('order') || desc.includes('welcome')) {
     return {
@@ -115,8 +153,8 @@ function mockGenerateWorkflow(description: string): GeneratedWorkflow {
         { id: 'end-1', type: 'end', label: 'End', config: {} },
       ],
       email_template: {
-        subject: 'Welcome to {{company.name}}, {{contact.name}}!',
-        body: `Hi {{contact.name}},\n\nThank you for choosing {{company.name}}! We're thrilled to have you on board.\n\nIf you have any questions, reply to this email or reach out to our team.\n\nBest regards,\nThe {{company.name}} Team`,
+        subject: `Welcome to ${companyName}, {{contact.name}}!`,
+        body: `Hi {{contact.name}},\n\nThank you for choosing ${companyName}!${kbContext}\n\nWe're thrilled to have you on board. If you have any questions about our ${industry} services, reply to this email or reach out to our team.\n\nBest regards,\nThe ${companyName} Team`,
       },
     };
   }
@@ -136,8 +174,8 @@ function mockGenerateWorkflow(description: string): GeneratedWorkflow {
         { id: 'end-1', type: 'end', label: 'End', config: {} },
       ],
       email_template: {
-        subject: 'Following up on your proposal — {{company.name}}',
-        body: `Hi {{contact.name}},\n\nI wanted to follow up on the proposal we sent for {{deal.name}}.\n\nPlease let me know if you have any questions or if you'd like to discuss next steps.\n\nBest,\n{{user.name}}`,
+        subject: `Following up on your proposal — ${companyName}`,
+        body: `Hi {{contact.name}},\n\nI wanted to follow up on the proposal we sent for {{deal.name}}.${kbContext}\n\nPlease let me know if you have any questions or if you'd like to discuss next steps.\n\nBest,\n{{user.name}}`,
       },
     };
   }
@@ -157,7 +195,7 @@ function mockGenerateWorkflow(description: string): GeneratedWorkflow {
       ],
       email_template: {
         subject: 'Payment Reminder: Invoice {{invoice.number}}',
-        body: `Hi {{contact.name}},\n\nThis is a friendly reminder that invoice {{invoice.number}} for {{invoice.total}} is now overdue.\n\nPlease arrange payment at your earliest convenience.\n\nThank you,\n{{company.name}} Finance Team`,
+        body: `Hi {{contact.name}},\n\nThis is a friendly reminder that invoice {{invoice.number}} for {{invoice.total}} is now overdue.${kbContext}\n\nPlease arrange payment at your earliest convenience.\n\nThank you,\n${companyName} Finance Team`,
       },
     };
   }
@@ -174,8 +212,8 @@ function mockGenerateWorkflow(description: string): GeneratedWorkflow {
       { id: 'end-1', type: 'end', label: 'End', config: {} },
     ],
     email_template: {
-      subject: 'Welcome, {{contact.name}}!',
-      body: `Hi {{contact.name}},\n\nWelcome! We're excited to connect with you.\n\nBest,\nThe Team`,
+      subject: `Welcome, {{contact.name}}!`,
+      body: `Hi {{contact.name}},\n\nWelcome to ${companyName}!${kbContext}\n\nWe're excited to connect with you.\n\nBest,\nThe ${companyName} Team`,
     },
   };
 }

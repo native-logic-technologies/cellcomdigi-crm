@@ -1,14 +1,14 @@
 // Auto-Insight Extraction Service
-// After a document is uploaded or scraped, calls Mercury 2 to extract
+// After a document is uploaded or scraped, calls AI to extract
 // factual insights and saves them as Memory vertices in the graph.
 
-// Auto-insight extraction using Mercury 2
+// Auto-insight extraction using AI
 
 const API_URL = 'https://api.inceptionlabs.ai/v1/chat/completions';
 const MODEL = 'mercury-2';
 
 function getApiKey(): string | null {
-  return (import.meta as any).env?.VITE_MERCURY_API_KEY || localStorage.getItem('mercury_api_key') || null;
+  return (import.meta as any).env?.VITE_AI_API_KEY || localStorage.getItem('ai_api_key') || null;
 }
 
 interface ExtractedInsight {
@@ -71,7 +71,7 @@ export async function extractInsightsFromText(
 
   if (!res.ok) {
     const err = await res.text();
-    throw new Error(`Mercury insight extraction error: ${res.status} ${err}`);
+    throw new Error(`AI insight extraction error: ${res.status} ${err}`);
   }
 
   const data = await res.json();

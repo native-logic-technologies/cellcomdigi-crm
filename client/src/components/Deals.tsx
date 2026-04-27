@@ -1,7 +1,9 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Pencil, Trash2, Calendar, User, Building2, GripVertical } from 'lucide-react';
 import { useTable, useDb } from '../spacetime/hooks';
 import { useToast } from '../hooks/useToast';
+import { useLanguage } from '../i18n/LanguageContext';
+import { useNavigation } from '../context/NavigationContext';
 import PageHeader from './PageHeader';
 import ConfirmDialog from './ConfirmDialog';
 import DealDetailModal from './DealDetailModal';
@@ -215,6 +217,7 @@ function StageColumn({
   onDelete: (id: bigint) => void;
   onView?: (d: Deal) => void;
 }) {
+  const { t } = useLanguage();
   const { setNodeRef, isOver } = useDroppable({
     id: stage.id.toString(),
     data: { stage },
@@ -265,7 +268,7 @@ function StageColumn({
         ))}
         {deals.length === 0 && (
           <div className="flex-1 flex items-center justify-center rounded-xl border-2 border-dashed border-slate-200 py-8">
-            <span className="text-xs text-slate-400 font-medium">Drop deals here</span>
+            <span className="text-xs text-slate-400 font-medium">{t('common.dropHere')}</span>
           </div>
         )}
       </div>
@@ -278,8 +281,10 @@ function StageColumn({
 /* ------------------------------------------------------------------ */
 
 export default function Deals() {
+  const { t } = useLanguage();
   const db = useDb();
   const { success } = useToast();
+  const { pendingAction, clearAction } = useNavigation();
   const [deals] = useTable('deals');
   const [stages] = useTable('pipeline_stages');
   const [pipelines] = useTable('pipelines');
@@ -305,6 +310,14 @@ export default function Deals() {
     probability: 10,
     expectedClose: '',
   });
+
+  useEffect(() => {
+    if (pendingAction === 'createDeal') {
+      openCreate();
+      clearAction();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const activePipeline =
     pipelines.find((p: any) => p.id.toString() === pipelineId) ?? pipelines[0];
@@ -447,9 +460,9 @@ export default function Deals() {
   return (
     <div className="space-y-5 max-w-7xl mx-auto animate-fade-in">
       <PageHeader
-        title="Deals"
-        subtitle="Track your sales pipeline"
-        actionLabel="Add Deal"
+        title={t('deals.title')}
+        subtitle={t('deals.subtitle')}
+        actionLabel={t('deals.addDeal')}
         onAction={openCreate}
       />
 
@@ -465,7 +478,7 @@ export default function Deals() {
           panel: 'px-0 py-0',
         }}
       >
-        <Tab key="pipeline" title="Pipeline">
+        <Tab key="pipeline" title={t('deals.pipeline')}>
           {pipelines.length > 1 && (
             <Select
               className="max-w-xs mb-4"
@@ -520,7 +533,7 @@ export default function Deals() {
           </DragOverlay>
         </DndContext>
         </Tab>
-        <Tab key="analytics" title="Analytics">
+        <Tab key="analytics" title={t('deals.analytics')}>
           <DealsAnalytics />
         </Tab>
       </Tabs>
@@ -529,18 +542,18 @@ export default function Deals() {
       <Modal isOpen={modalOpen} onOpenChange={setModalOpen} size="lg">
         <ModalContent>
           <ModalHeader className="text-slate-900 font-outfit">
-            {editing ? 'Edit Deal' : 'New Deal'}
+            {editing ? t('common.edit') : t('common.create')} {t('deals.title')}
           </ModalHeader>
           <ModalBody className="gap-4">
             <Input
-              label="Deal Name"
+              label={t('common.dealName')}
               value={form.name}
               onValueChange={(v) => setForm({ ...form, name: v })}
               isRequired
             />
             <div className="grid grid-cols-2 gap-4">
               <Select
-                label="Contact"
+                label={t('contacts.name')}
                 selectedKeys={form.contactId ? [form.contactId] : []}
                 onSelectionChange={(keys) =>
                   setForm({ ...form, contactId: Array.from(keys)[0] as string })
@@ -558,7 +571,7 @@ export default function Deals() {
                 )}
               </Select>
               <Select
-                label="Company"
+                label={t('contacts.company')}
                 selectedKeys={form.companyId ? [form.companyId] : []}
                 onSelectionChange={(keys) =>
                   setForm({
@@ -583,14 +596,14 @@ export default function Deals() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <Input
-                label="Value (RM)"
+                label={t('common.value')}
                 type="number"
                 step="0.01"
                 value={form.value}
                 onValueChange={(v) => setForm({ ...form, value: v })}
               />
               <Select
-                label="Stage"
+                label={t('deals.stage')}
                 selectedKeys={form.stageId ? [form.stageId] : []}
                 onSelectionChange={(keys) =>
                   setForm({
@@ -612,7 +625,7 @@ export default function Deals() {
               </Select>
             </div>
             <Input
-              label="Expected Close"
+              label={t('common.expectedClose')}
               type="date"
               value={form.expectedClose}
               onValueChange={(v) => setForm({ ...form, expectedClose: v })}
@@ -620,10 +633,10 @@ export default function Deals() {
           </ModalBody>
           <ModalFooter>
             <Button variant="light" onPress={() => setModalOpen(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button color="primary" className="bg-brand-600" onPress={save}>
-              Save
+              {t('common.save')}
             </Button>
           </ModalFooter>
         </ModalContent>
@@ -633,9 +646,9 @@ export default function Deals() {
         isOpen={confirmOpen}
         onClose={() => setConfirmOpen(false)}
         onConfirm={remove}
-        title="Delete deal?"
+        title={`${t('common.delete')} ${t('deals.title').toLowerCase()}?`}
         description="This will permanently remove the deal from your pipeline."
-        confirmLabel="Delete"
+        confirmLabel={t('common.delete')}
       />
 
       <DealDetailModal deal={detailDeal} onClose={() => setDetailDeal(null)} />

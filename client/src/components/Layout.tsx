@@ -1,11 +1,14 @@
 import {
   LayoutDashboard, Users, Building2, Banknote, Inbox,
-  ShoppingCart, FileText, Network, Menu, X, Bell, Moon, Sun,
+  ShoppingCart, FileText, Menu, X, Bell, Moon, Sun,
   Settings, LogOut, ChevronLeft, ChevronRight, Wand2, TrendingUp,
   Share2, Brain
 } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useConnectionStatus } from '../spacetime/hooks';
+import { useTheme } from '../context/ThemeContext';
+import { useNavigation } from '../context/NavigationContext';
+import { useLanguage } from '../i18n/LanguageContext';
 import {
   Navbar, NavbarContent, NavbarItem, Button, Avatar,
   Input, Tooltip, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem,
@@ -18,68 +21,99 @@ interface NavSection {
   items: { id: Page; label: string; icon: React.ElementType }[];
 }
 
-const navSections: NavSection[] = [
+const pageKeys: Record<Page, string> = {
+  dashboard: 'nav.dashboard',
+  contacts: 'nav.contacts',
+  companies: 'nav.companies',
+  deals: 'nav.deals',
+  inbox: 'nav.inbox',
+  products: 'nav.products',
+  invoices: 'nav.invoices',
+  graph: 'nav.knowledgeGraph',
+  automations: 'nav.automations',
+  analytics: 'nav.analytics',
+  social: 'nav.social',
+  knowledgebase: 'nav.knowledgeBase',
+  settings: 'nav.settings',
+};
+
+const navItems: { section: string; items: { id: Page; icon: React.ElementType }[] }[] = [
   {
-    label: 'Sales',
+    section: 'nav.sales',
     items: [
-      { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-      { id: 'deals', label: 'Deals', icon: Banknote },
-      { id: 'contacts', label: 'Contacts', icon: Users },
-      { id: 'companies', label: 'Companies', icon: Building2 },
-      { id: 'automations', label: 'Automations', icon: Wand2 },
-      { id: 'analytics', label: 'Analytics', icon: TrendingUp },
-      { id: 'social', label: 'Social Planner', icon: Share2 },
+      { id: 'dashboard', icon: LayoutDashboard },
+      { id: 'deals', icon: Banknote },
+      { id: 'contacts', icon: Users },
+      { id: 'companies', icon: Building2 },
+      { id: 'automations', icon: Wand2 },
+      { id: 'analytics', icon: TrendingUp },
+      { id: 'social', icon: Share2 },
     ],
   },
   {
-    label: 'Finance',
+    section: 'nav.finance',
     items: [
-      { id: 'invoices', label: 'Invoices', icon: FileText },
-      { id: 'products', label: 'Products', icon: ShoppingCart },
+      { id: 'invoices', icon: FileText },
+      { id: 'products', icon: ShoppingCart },
     ],
   },
   {
-    label: 'Operations',
+    section: 'nav.operations',
     items: [
-      { id: 'inbox', label: 'Inbox', icon: Inbox },
-      { id: 'graph', label: 'Knowledge Graph', icon: Network },
-      { id: 'knowledgebase', label: 'Knowledge Base', icon: Brain },
+      { id: 'inbox', icon: Inbox },
+      { id: 'knowledgebase', icon: Brain },
     ],
   },
 ];
 
-const pageTitles: Record<Page, { title: string; subtitle: string }> = {
-  dashboard: { title: 'Dashboard', subtitle: 'Overview of your business' },
-  contacts: { title: 'Contacts', subtitle: 'Manage your leads and customers' },
-  companies: { title: 'Companies', subtitle: 'Manage your business accounts' },
-  deals: { title: 'Deals', subtitle: 'Track your sales pipeline' },
-  inbox: { title: 'Inbox', subtitle: 'Unified conversations across channels' },
-  products: { title: 'Products', subtitle: 'Manage your product catalog' },
-  invoices: { title: 'Invoices', subtitle: 'Billing and LHDN e-invoicing' },
-  graph: { title: 'Knowledge Graph', subtitle: 'Visualize relationships across your data' },
-  automations: { title: 'Automations', subtitle: 'AI-powered workflow automation' },
-  analytics: { title: 'Analytics', subtitle: 'Pipeline performance and conversion metrics' },
-  social: { title: 'Social Planner', subtitle: 'Plan, generate, and publish social content' },
-  knowledgebase: { title: 'Knowledge Base', subtitle: 'Documents, memories, and intelligence containers' },
-  settings: { title: 'Settings', subtitle: 'Manage your profile and company information' },
-};
-
-export default function Layout({ page, setPage, children, user, onLogout }: {
-  page: Page;
-  setPage: (p: Page) => void;
+export default function Layout({ children, user, onLogout }: {
   children: React.ReactNode;
   user: { name: string; email: string } | null;
   onLogout: () => void;
 }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
+  const { darkMode, toggleDarkMode } = useTheme();
+  const { page, setPage } = useNavigation();
   const connected = useConnectionStatus();
+  const { t } = useLanguage();
+
+  const navSections: NavSection[] = useMemo(() =>
+    navItems.map((sec) => ({
+      label: t(sec.section),
+      items: sec.items.map((item) => ({
+        id: item.id,
+        label: t(pageKeys[item.id]),
+        icon: item.icon,
+      })),
+    })),
+  [t]);
+
+  const pageTitles = useMemo(() => {
+    const titles: Record<Page, { title: string; subtitle: string }> = {} as any;
+    for (const key of Object.keys(pageKeys) as Page[]) {
+      titles[key] = { title: t(pageKeys[key]), subtitle: '' };
+    }
+    titles.dashboard.subtitle = '';
+    titles.contacts.subtitle = t('contacts.subtitle');
+    titles.companies.subtitle = t('companies.subtitle');
+    titles.deals.subtitle = t('deals.subtitle');
+    titles.inbox.subtitle = t('inbox.subtitle');
+    titles.products.subtitle = t('products.subtitle');
+    titles.invoices.subtitle = t('invoices.subtitle');
+    titles.automations.subtitle = t('automations.subtitle');
+    titles.analytics.subtitle = t('analytics.subtitle');
+    titles.social.subtitle = t('social.subtitle');
+    titles.knowledgebase.subtitle = t('knowledgebase.subtitle');
+    titles.settings.subtitle = t('settings.subtitle');
+    return titles;
+  }, [t]);
 
   const sidebarWidth = collapsed ? 'w-[72px]' : 'w-[260px]';
+  const currentPageTitle = pageTitles[page];
 
   return (
-    <div className={`min-h-screen flex bg-slate-50 ${darkMode ? 'dark' : ''}`}>
+    <div className="min-h-screen flex bg-slate-50">
       {/* Mobile overlay */}
       {mobileOpen && (
         <div
@@ -104,11 +138,7 @@ export default function Layout({ page, setPage, children, user, onLogout }: {
             alt="CelcomDigi"
             className="h-8 w-auto shrink-0"
           />
-          {!collapsed && (
-            <span className="ml-2 font-semibold text-slate-800 font-outfit text-lg tracking-tight">
-              CRM
-            </span>
-          )}
+
           <button
             onClick={() => setCollapsed(!collapsed)}
             className="ml-auto hidden lg:flex p-1 rounded-lg hover:bg-slate-100 text-slate-400 transition-colors"
@@ -183,7 +213,7 @@ export default function Layout({ page, setPage, children, user, onLogout }: {
                 <p className="text-sm font-medium text-slate-700 truncate">{user?.name ?? 'Guest'}</p>
                 <div className="flex items-center gap-1.5">
                   <span className={`w-1.5 h-1.5 rounded-full ${connected ? 'bg-emerald-500' : 'bg-rose-500'}`} />
-                  <span className="text-[11px] text-slate-400">{connected ? 'Online' : 'Offline'}</span>
+                  <span className="text-[11px] text-slate-400">{connected ? t('nav.online') : t('nav.offline')}</span>
                 </div>
               </div>
             )}
@@ -204,25 +234,31 @@ export default function Layout({ page, setPage, children, user, onLogout }: {
             >
               <Menu className="w-5 h-5" />
             </Button>
-            <NavbarItem className="hidden sm:flex">
+            <div className="hidden sm:flex flex-col">
+              <h1 className="text-base font-semibold text-slate-900">{currentPageTitle.title}</h1>
+              {currentPageTitle.subtitle && (
+                <p className="text-xs text-slate-400">{currentPageTitle.subtitle}</p>
+              )}
+            </div>
+          </NavbarContent>
+          <NavbarContent justify="end" className="gap-2">
+            <NavbarItem className="hidden md:flex">
               <Input
                 classNames={{
                   base: 'w-72',
                   inputWrapper: 'h-9 bg-slate-100 border-0 shadow-none',
                   input: 'text-sm placeholder:text-slate-400',
                 }}
-                placeholder="Search contacts, deals..."
+                placeholder={t('nav.searchPlaceholder')}
                 size="sm"
               />
             </NavbarItem>
-          </NavbarContent>
-          <NavbarContent justify="end" className="gap-2">
             <Button
               isIconOnly
               variant="light"
               size="sm"
               className="text-slate-500"
-              onPress={() => setDarkMode(!darkMode)}
+              onPress={toggleDarkMode}
             >
               {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </Button>
@@ -235,7 +271,7 @@ export default function Layout({ page, setPage, children, user, onLogout }: {
               </DropdownTrigger>
               <DropdownMenu aria-label="Notifications">
                 <DropdownItem key="msg">3 new messages from leads</DropdownItem>
-                <DropdownItem key="deal">Deal "TechVenture CRM" moved to Proposal</DropdownItem>
+                <DropdownItem key="deal">Deal &quot;TechVenture CRM&quot; moved to Proposal</DropdownItem>
                 <DropdownItem key="inv">Invoice INV-001 is overdue</DropdownItem>
               </DropdownMenu>
             </Dropdown>
@@ -248,9 +284,9 @@ export default function Layout({ page, setPage, children, user, onLogout }: {
                 />
               </DropdownTrigger>
               <DropdownMenu aria-label="User menu">
-                <DropdownItem key="settings" startContent={<Settings className="w-4 h-4" />} onPress={() => setPage('settings')}>Settings</DropdownItem>
+                <DropdownItem key="settings" startContent={<Settings className="w-4 h-4" />} onPress={() => setPage('settings')}>{t('nav.settings')}</DropdownItem>
                 <DropdownItem key="logout" startContent={<LogOut className="w-4 h-4" />} className="text-rose-600" onPress={onLogout}>
-                  Log out
+                  {t('login.signIn') === 'Log Masuk' ? 'Log Keluar' : t('login.signIn') === '登录' ? '退出登录' : 'Log out'}
                 </DropdownItem>
               </DropdownMenu>
             </Dropdown>
@@ -267,4 +303,3 @@ export default function Layout({ page, setPage, children, user, onLogout }: {
 }
 
 export type { Page };
-export { pageTitles };

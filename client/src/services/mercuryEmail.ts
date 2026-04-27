@@ -1,4 +1,4 @@
-// Inception Labs Mercury 2 — Hyper-Personalised Email Reply Generation
+// AI AI — Hyper-Personalised Email Reply Generation
 // Uses Supermemory graph context for deeply personalised replies
 
 const API_URL = 'https://api.inceptionlabs.ai/v1/chat/completions';
@@ -15,7 +15,7 @@ interface EmailReplyRequest {
 }
 
 function getApiKey(): string | null {
-  return (import.meta as any).env?.VITE_MERCURY_API_KEY || localStorage.getItem('mercury_api_key') || null;
+  return (import.meta as any).env?.VITE_AI_API_KEY || localStorage.getItem('ai_api_key') || null;
 }
 
 export async function generateEmailReply(req: EmailReplyRequest): Promise<string> {
@@ -72,7 +72,7 @@ REQUIREMENTS:
 
   if (!res.ok) {
     const err = await res.text();
-    throw new Error(`Mercury API error: ${res.status} ${err}`);
+    throw new Error(`AI API error: ${res.status} ${err}`);
   }
 
   const data = await res.json();

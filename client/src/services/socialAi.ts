@@ -1,4 +1,4 @@
-// Inception Labs Mercury 2 — Social Media Content Generation
+// AI AI — Social Media Content Generation
 // Generates bilingual BM+EN social posts using live CRM context
 
 const API_URL = 'https://api.inceptionlabs.ai/v1/chat/completions';
@@ -18,7 +18,7 @@ export interface GeneratedCampaignBatch {
 }
 
 function getApiKey(): string | null {
-  return (import.meta as any).env?.VITE_MERCURY_API_KEY || localStorage.getItem('mercury_api_key') || null;
+  return (import.meta as any).env?.VITE_AI_API_KEY || localStorage.getItem('ai_api_key') || null;
 }
 
 function buildSystemPrompt(context: SocialContext): string {
@@ -118,12 +118,12 @@ Requirements:
 
   if (!res.ok) {
     const err = await res.text();
-    throw new Error(`Mercury API error: ${res.status} ${err}`);
+    throw new Error(`AI API error: ${res.status} ${err}`);
   }
 
   const data = await res.json();
   const content = data.choices?.[0]?.message?.content;
-  if (!content) throw new Error('Empty response from Mercury API');
+  if (!content) throw new Error('Empty response from AI API');
 
   try {
     const jsonMatch = content.match(/\{[\s\S]*\}/);

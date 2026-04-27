@@ -5,6 +5,7 @@ import {
   Send, Edit2, Trash2, Wand2, Check,
 } from 'lucide-react';
 import { useTable, useDb } from '../spacetime/hooks';
+import { useLanguage } from '../i18n/LanguageContext';
 import PageHeader from './PageHeader';
 import ConfirmDialog from './ConfirmDialog';
 import { useToast } from '../hooks/useToast';
@@ -39,6 +40,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function SocialPlanner() {
+  const { t } = useLanguage();
   const db = useDb();
   const { success } = useToast();
   const [posts] = useTable('social_posts');
@@ -123,8 +125,8 @@ export default function SocialPlanner() {
   return (
     <div className="space-y-5 max-w-7xl mx-auto animate-fade-in">
       <PageHeader
-        title="Social Planner"
-        subtitle="Plan, generate, and publish social content"
+        title={t('social.title')}
+        subtitle={t('social.subtitle')}
         actionLabel="New Post"
         onAction={openCreate}
       />

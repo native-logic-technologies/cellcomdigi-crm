@@ -170,7 +170,7 @@ export function buildContactContext(
     if (edgeList.some(e => e.relationType.tag === 'SimilarTo') && options.includeSimilar) similar.push(vertex);
   }
 
-  // Format as structured Markdown for Mercury 2
+  // Format as structured Markdown for AI
   const lines: string[] = [];
   lines.push(`# Contact Intelligence: ${parseProperties(contactVertex).title || 'Contact #' + contactId}`);
   lines.push('');

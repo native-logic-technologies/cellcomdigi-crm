@@ -1,0 +1,17 @@
+[Unit]
+Description=CellCom CRM Archive Service (SSD offload for SpacetimeDB)
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/workspace/cellcomcrm/server/archive
+ExecStart=/usr/bin/node dist/index.js
+Restart=on-failure
+RestartSec=5
+Environment="ARCHIVE_PORT=3002"
+Environment="ARCHIVE_HOST=127.0.0.1"
+Environment="ARCHIVE_DATA_DIR=/workspace/cellcomcrm/data"
+
+[Install]
+WantedBy=multi-user.target
